@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { FiSettings } from "react-icons/fi";
-import { HiChevronDown, HiChevronLeft, HiChevronRight } from "react-icons/hi";
+import { HiChevronLeft, HiChevronRight } from "react-icons/hi";
 import { ConsoleLayout } from "@/components/console/ConsoleLayout";
 import {
   ConsoleField,
@@ -13,6 +13,7 @@ import {
   ConsoleSelect,
   ConsoleTextarea,
 } from "@/components/console/ConsoleInput";
+import { TriangleDownIcon } from "@/components/console/TriangleDownIcon";
 import { ConsoleSkeleton } from "@/components/console/ConsoleSkeleton";
 import {
   ApiError,
@@ -211,10 +212,7 @@ export default function CreateRecordPage() {
             aria-expanded={methodOpen}
           >
             <span className="console-details-panel__header-left">
-              <HiChevronDown
-                size={14}
-                style={{ transform: methodOpen ? undefined : "rotate(-90deg)" }}
-              />
+              <TriangleDownIcon size={10} extraRotateDeg={methodOpen ? 0 : -90} />
               Record creation method
             </span>
           </button>
@@ -443,12 +441,10 @@ export default function CreateRecordPage() {
             aria-expanded={existingOpen}
           >
             <span className="console-details-panel__header-left">
-              <HiChevronDown
-                size={14}
-                style={{
-                  color: "var(--console-link)",
-                  transform: existingOpen ? undefined : "rotate(-90deg)",
-                }}
+              <TriangleDownIcon
+                size={10}
+                extraRotateDeg={existingOpen ? 0 : -90}
+                style={{ color: "var(--console-link)" }}
               />
               View existing records
             </span>

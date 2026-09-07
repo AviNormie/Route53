@@ -1,15 +1,16 @@
 import type { SVGProps } from "react";
+import { BsTriangleFill } from "react-icons/bs";
 
-type IconProps = SVGProps<SVGSVGElement>;
+type IconProps = SVGProps<SVGSVGElement> & { size?: number | string };
 
-export function ChevronDownIcon(props: IconProps) {
+export function ChevronDownIcon({ size = 12, style, className }: IconProps) {
   return (
-    <svg viewBox="0 0 16 16" width="12" height="12" aria-hidden="true" {...props}>
-      <path
-        fill="currentColor"
-        d="M3.2 5.3a.75.75 0 0 1 1.06 0L8 9.04l3.74-3.74a.75.75 0 1 1 1.06 1.06l-4.27 4.27a.75.75 0 0 1-1.06 0L3.2 6.36a.75.75 0 0 1 0-1.06Z"
-      />
-    </svg>
+    <BsTriangleFill
+      size={size}
+      aria-hidden="true"
+      className={className}
+      style={{ transform: "rotate(300deg)", display: "inline-block", ...style }}
+    />
   );
 }
 

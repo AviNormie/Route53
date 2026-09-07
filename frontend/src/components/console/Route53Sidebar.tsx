@@ -3,7 +3,8 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
-import { HiChevronDown, HiChevronLeft, HiChevronRight } from "react-icons/hi";
+import { HiChevronLeft } from "react-icons/hi";
+import { TriangleDownIcon } from "@/components/console/TriangleDownIcon";
 
 type NavItem = {
   label: string;
@@ -27,7 +28,7 @@ const TOP_LINKS: NavItem[] = [
 const SECTIONS: NavSection[] = [
   {
     id: "global-resolver",
-    title: "Global resolver",
+    title: "Global Resolver",
     items: [
       { label: "Global resolvers", href: "/resolver/global", badge: "New" },
       { label: "Shared DNS views", href: "/resolver/shared-dns-views", badge: "New" },
@@ -35,7 +36,7 @@ const SECTIONS: NavSection[] = [
   },
   {
     id: "vpc-resolver",
-    title: "VPC resolver",
+    title: "VPC Resolver",
     items: [
       { label: "VPCs", href: "/resolver/vpcs" },
       { label: "Inbound endpoints", href: "/resolver/inbound-endpoints" },
@@ -143,9 +144,9 @@ export function Route53Sidebar({
                 onClick={() => toggleSection(section.id)}
               >
                 {open ? (
-                  <HiChevronDown size={12} aria-hidden="true" />
+                  <TriangleDownIcon size={8} />
                 ) : (
-                  <HiChevronRight size={12} aria-hidden="true" />
+                  <TriangleDownIcon size={8} extraRotateDeg={-90} />
                 )}
                 <span>{section.title}</span>
               </button>

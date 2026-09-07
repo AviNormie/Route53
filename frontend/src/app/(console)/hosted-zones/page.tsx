@@ -2,11 +2,12 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
-import { FiRefreshCw, FiSettings } from "react-icons/fi";
+import { FiCheckCircle, FiRefreshCw, FiSettings, FiX } from "react-icons/fi";
 import { HiChevronLeft, HiChevronRight } from "react-icons/hi";
 import { ConsoleLayout } from "@/components/console/ConsoleLayout";
 import { ConsoleSearch } from "@/components/console/ConsoleInput";
 import { ConsoleSkeleton } from "@/components/console/ConsoleSkeleton";
+import { TriangleDownIcon } from "@/components/console/TriangleDownIcon";
 import {
   ApiError,
   deleteHostedZone,
@@ -14,6 +15,15 @@ import {
   listHostedZones,
   type HostedZone,
 } from "@/lib/api";
+
+function SortLabel({ children }: { children: string }) {
+  return (
+    <span className="console-hz-sort-label">
+      {children}
+      <TriangleDownIcon className="sort-icon" size={8} />
+    </span>
+  );
+}
 
 export default function HostedZonesPage() {
   const [zones, setZones] = useState<HostedZone[]>([]);
@@ -23,6 +33,15 @@ export default function HostedZonesPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
+  const [successName, setSuccessName] = useState<string | null>(null);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const created = params.get("created");
+    if (!created) return;
+    setSuccessName(created);
+    window.history.replaceState({}, "", "/hosted-zones");
+  }, []);
 
   const load = useCallback(async (search?: string) => {
     setLoading(true);
@@ -77,13 +96,40 @@ export default function HostedZonesPage() {
 
   return (
     <ConsoleLayout breadcrumbs={[{ label: "Hosted zones", href: "/hosted-zones" }]}>
-      <div className="console-page">
+      <div className="console-page console-hz-page">
+        {successName ? (
+          <div className="console-flash console-flash--success" role="status">
+            <FiCheckCircle size={20} className="console-flash__icon" aria-hidden="true" />
+            <div className="console-flash__body">
+              <p className="console-flash__title">{successName} was successfully created.</p>
+              <p className="console-flash__text">
+                Now you can create records in the hosted zone to specify how you want Route 53 to
+                route traffic for your domain.
+              </p>
+            </div>
+            <button
+              type="button"
+              className="console-flash__close"
+              aria-label="Dismiss notification"
+              onClick={() => setSuccessName(null)}
+            >
+              <FiX size={18} aria-hidden="true" />
+            </button>
+          </div>
+        ) : null}
+
         <div className="console-hz-toolbar">
-          <h1 className="console-page__title">Hosted zones ({loading ? "…" : total})</h1>
+          <div className="console-hz-toolbar__heading">
+            <h1 className="console-page__title">Hosted zones ({loading ? "…" : total})</h1>
+            <p className="console-hz-hint">
+              Automatic mode is the current search behavior optimized for best filter results.{" "}
+              <a href="#">To change modes go to settings.</a>
+            </p>
+          </div>
           <div className="console-hz-toolbar__actions">
             <button
               type="button"
-              className="console-icon-btn"
+              className="console-icon-btn console-icon-btn--accent"
               aria-label="Refresh"
               onClick={() => void load(query)}
             >
@@ -116,11 +162,6 @@ export default function HostedZonesPage() {
           </div>
         </div>
 
-        <p className="console-hz-hint">
-          Automatic mode is the current search behavior optimized for best filter results.{" "}
-          <a href="#">To change modes go to settings.</a>
-        </p>
-
         {error ? <p className="console-inline-msg console-inline-msg--error">{error}</p> : null}
 
         <div className="console-hz-filter-row">
@@ -145,30 +186,28 @@ export default function HostedZonesPage() {
 
         {loading ? <ConsoleSkeleton rows={6} title={false} /> : null}
 
-        <div className="console-table-wrap" hidden={loading}>
-          <table className="console-table console-table--clickable">
+        <div className="console-table-wrap console-hz-table-wrap" hidden={loading}>
+          <table className="console-table console-table--clickable console-hz-table">
             <thead>
               <tr>
+                <th className="console-hz-table__select" aria-label="Select" />
                 <th>
-                  <input type="checkbox" aria-label="Select all" disabled={zones.length === 0} />
+                  <SortLabel>Hosted zone name</SortLabel>
                 </th>
                 <th>
-                  Hosted zone name <span className="sort-icon">⇅</span>
+                  <SortLabel>Type</SortLabel>
                 </th>
                 <th>
-                  Type <span className="sort-icon">⇅</span>
+                  <SortLabel>Created by</SortLabel>
                 </th>
                 <th>
-                  Created by <span className="sort-icon">⇅</span>
+                  <SortLabel>Record count</SortLabel>
                 </th>
                 <th>
-                  Record count <span className="sort-icon">⇅</span>
+                  <SortLabel>Description</SortLabel>
                 </th>
                 <th>
-                  Description <span className="sort-icon">⇅</span>
-                </th>
-                <th>
-                  Hosted zone ID <span className="sort-icon">⇅</span>
+                  <SortLabel>Hosted zone ID</SortLabel>
                 </th>
               </tr>
             </thead>
@@ -193,14 +232,19 @@ export default function HostedZonesPage() {
                     key={zone.id}
                     className={selected === zone.id ? "is-selected" : undefined}
                     onClick={() => setSelected(zone.id)}
+                    onDoubleClick={() => {
+                      window.location.href = `/hosted-zones/${zone.id}`;
+                    }}
                   >
-                    <td onClick={(e) => e.stopPropagation()}>
+                    <td
+                      className="console-hz-table__select"
+                      onClick={(e) => e.stopPropagation()}
+                    >
                       <input
-                        type="checkbox"
+                        type="radio"
+                        name="hosted-zone-selection"
                         checked={selected === zone.id}
-                        onChange={() =>
-                          setSelected((cur) => (cur === zone.id ? null : zone.id))
-                        }
+                        onChange={() => setSelected(zone.id)}
                         aria-label={`Select ${displayDomain(zone.name)}`}
                       />
                     </td>
@@ -214,7 +258,7 @@ export default function HostedZonesPage() {
                     <td>{zone.record_count}</td>
                     <td>{zone.comment || "—"}</td>
                     <td>
-                      <code>{zone.id}</code>
+                      <code className="console-hz-table__id">{zone.id}</code>
                     </td>
                   </tr>
                 ))
