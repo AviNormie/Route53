@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
-import { useMemo, useState, type FormEvent } from "react";
+import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { FiSettings } from "react-icons/fi";
 import { HiChevronDown, HiChevronLeft, HiChevronRight } from "react-icons/hi";
 import { ConsoleLayout } from "@/components/console/ConsoleLayout";
@@ -13,8 +13,29 @@ import {
   ConsoleSelect,
   ConsoleTextarea,
 } from "@/components/console/ConsoleInput";
-import { RECORD_TYPE_OPTIONS, type DnsRecordType } from "@/lib/mock/records";
-import { useMockDns } from "@/lib/mock/store";
+import { ConsoleSkeleton } from "@/components/console/ConsoleSkeleton";
+import {
+  ApiError,
+  createDnsRecord,
+  displayDomain,
+  getHostedZone,
+  listDnsRecords,
+  type DnsRecord,
+  type DnsRecordType,
+  type HostedZone,
+} from "@/lib/api";
+
+const RECORD_TYPE_OPTIONS: { value: DnsRecordType; label: string }[] = [
+  { value: "A", label: "A – Routes traffic to an IPv4 address and some AWS resources" },
+  { value: "AAAA", label: "AAAA – Routes traffic to an IPv6 address and some AWS resources" },
+  { value: "CNAME", label: "CNAME – Routes traffic to another domain name" },
+  { value: "MX", label: "MX – Routes traffic to mail servers" },
+  { value: "TXT", label: "TXT – Holds text-based verification values" },
+  { value: "NS", label: "NS – Name servers for the hosted zone" },
+  { value: "PTR", label: "PTR – Reverse DNS lookup" },
+  { value: "SRV", label: "SRV – Service locator" },
+  { value: "CAA", label: "CAA – Certificate Authority Authorization" },
+];
 
 type DraftRecord = {
   id: string;
@@ -23,7 +44,9 @@ type DraftRecord = {
   alias: boolean;
   value: string;
   ttl: string;
-  routingPolicy: string;
+  priority: string;
+  weight: string;
+  port: string;
 };
 
 function newDraft(): DraftRecord {
@@ -34,23 +57,57 @@ function newDraft(): DraftRecord {
     alias: false,
     value: "192.0.2.235",
     ttl: "300",
-    routingPolicy: "Simple routing",
+    priority: "10",
+    weight: "0",
+    port: "443",
   };
+}
+
+function fqdn(subdomain: string, zoneName: string): string {
+  const zone = zoneName.endsWith(".") ? zoneName : `${zoneName}.`;
+  const sub = subdomain.trim().replace(/\.$/, "");
+  if (!sub) return zone;
+  return `${sub}.${displayDomain(zone)}.`;
 }
 
 export default function CreateRecordPage() {
   const params = useParams<{ zoneId: string }>();
   const router = useRouter();
   const zoneId = params.zoneId;
-  const { hydrated, getZone, getRecordsForZone, createRecord } = useMockDns();
-  const zone = getZone(zoneId);
-  const existing = getRecordsForZone(zoneId);
 
+  const [zone, setZone] = useState<HostedZone | null>(null);
+  const [existing, setExisting] = useState<DnsRecord[]>([]);
+  const [loading, setLoading] = useState(true);
   const [methodOpen, setMethodOpen] = useState(true);
   const [existingOpen, setExistingOpen] = useState(true);
   const [drafts, setDrafts] = useState<DraftRecord[]>([newDraft()]);
   const [query, setQuery] = useState("");
   const [error, setError] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const [z, recs] = await Promise.all([
+          getHostedZone(zoneId),
+          listDnsRecords(zoneId, { page_size: 100 }),
+        ]);
+        if (cancelled) return;
+        setZone(z);
+        setExisting(recs.items);
+      } catch (err) {
+        if (!cancelled) {
+          setError(err instanceof ApiError ? err.message : "Failed to load zone.");
+        }
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [zoneId]);
 
   const filteredExisting = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -63,10 +120,65 @@ export default function CreateRecordPage() {
     );
   }, [existing, query]);
 
-  if (!hydrated) {
+  const updateDraft = (id: string, patch: Partial<DraftRecord>) => {
+    setDrafts((prev) => prev.map((d) => (d.id === id ? { ...d, ...patch } : d)));
+  };
+
+  const onSubmit = async (e: FormEvent) => {
+    e.preventDefault();
+    if (!zone) return;
+
+    setSubmitting(true);
+    setError("");
+    try {
+      for (const draft of drafts) {
+        const ttl = Number(draft.ttl);
+        if (!draft.value.trim() || !Number.isFinite(ttl) || ttl < 0) {
+          throw new Error("Each record needs a value and a valid TTL.");
+        }
+
+        let value = draft.value.trim();
+        let priority = Number(draft.priority) || 10;
+
+        if (draft.type === "MX") {
+          const parts = value.split(/\s+/);
+          if (parts.length >= 2 && /^\d+$/.test(parts[0])) {
+            priority = Number(parts[0]);
+            value = parts.slice(1).join(" ");
+          }
+        }
+
+        await createDnsRecord(zone.id, {
+          name: fqdn(draft.subdomain, zone.name),
+          type: draft.type,
+          ttl,
+          value,
+          priority: draft.type === "MX" || draft.type === "SRV" ? priority : undefined,
+          weight: draft.type === "SRV" ? Number(draft.weight) || 0 : undefined,
+          port: draft.type === "SRV" ? Number(draft.port) || 0 : undefined,
+          caa_flag: draft.type === "CAA" ? 0 : undefined,
+          caa_tag: draft.type === "CAA" ? "issue" : undefined,
+        });
+      }
+      router.push(`/hosted-zones/${zone.id}`);
+    } catch (err) {
+      setError(
+        err instanceof ApiError
+          ? err.message
+          : err instanceof Error
+            ? err.message
+            : "Failed to create records.",
+      );
+      setSubmitting(false);
+    }
+  };
+
+  if (loading) {
     return (
       <ConsoleLayout breadcrumbs={[{ label: "Hosted zones", href: "/hosted-zones" }]}>
-        <p className="console-page__muted">Loading…</p>
+        <div className="console-page" style={{ maxWidth: 960 }}>
+          <ConsoleSkeleton rows={5} />
+        </div>
       </ConsoleLayout>
     );
   }
@@ -75,42 +187,18 @@ export default function CreateRecordPage() {
     return (
       <ConsoleLayout breadcrumbs={[{ label: "Hosted zones", href: "/hosted-zones" }]}>
         <h1 className="console-page__title">Hosted zone not found</h1>
+        <p className="console-page__muted">{error}</p>
       </ConsoleLayout>
     );
   }
 
-  const updateDraft = (id: string, patch: Partial<DraftRecord>) => {
-    setDrafts((prev) => prev.map((d) => (d.id === id ? { ...d, ...patch } : d)));
-  };
-
-  const onSubmit = (e: FormEvent) => {
-    e.preventDefault();
-    for (const draft of drafts) {
-      const ttl = Number(draft.ttl);
-      if (!draft.value.trim() || !Number.isFinite(ttl) || ttl < 0) {
-        setError("Each record needs a value and a valid TTL.");
-        return;
-      }
-      const name = draft.subdomain.trim()
-        ? `${draft.subdomain.trim()}.${zone.name}`
-        : zone.name;
-      createRecord({
-        zoneId: zone.id,
-        name,
-        type: draft.type,
-        value: draft.value.trim(),
-        ttl,
-        routingPolicy: draft.routingPolicy.replace(/ routing$/i, "") || "Simple",
-      });
-    }
-    router.push(`/hosted-zones/${zone.id}`);
-  };
+  const domain = displayDomain(zone.name);
 
   return (
     <ConsoleLayout
       breadcrumbs={[
         { label: "Hosted zones", href: "/hosted-zones" },
-        { label: zone.name, href: `/hosted-zones/${zone.id}` },
+        { label: domain, href: `/hosted-zones/${zone.id}` },
         { label: "Create record" },
       ]}
     >
@@ -159,7 +247,7 @@ export default function CreateRecordPage() {
           </a>
         </div>
 
-        <form className="console-card" onSubmit={onSubmit} style={{ padding: "1rem" }}>
+        <form className="console-card" onSubmit={(e) => void onSubmit(e)} style={{ padding: "1rem" }}>
           <div className="console-quick-header">
             <h2>Quick create record</h2>
             <a href="#" className="console-link">
@@ -198,7 +286,7 @@ export default function CreateRecordPage() {
                       value={draft.subdomain}
                       onChange={(e) => updateDraft(draft.id, { subdomain: e.target.value })}
                     />
-                    <span className="console-record-suffix">.{zone.name}</span>
+                    <span className="console-record-suffix">.{domain}</span>
                   </div>
                 </ConsoleField>
 
@@ -236,6 +324,35 @@ export default function CreateRecordPage() {
                   </button>
                   <span>Alias</span>
                 </div>
+
+                {(draft.type === "MX" || draft.type === "SRV") && (
+                  <ConsoleField label="Priority" htmlFor={`prio-${draft.id}`}>
+                    <ConsoleInput
+                      id={`prio-${draft.id}`}
+                      value={draft.priority}
+                      onChange={(e) => updateDraft(draft.id, { priority: e.target.value })}
+                    />
+                  </ConsoleField>
+                )}
+
+                {draft.type === "SRV" && (
+                  <>
+                    <ConsoleField label="Weight" htmlFor={`weight-${draft.id}`}>
+                      <ConsoleInput
+                        id={`weight-${draft.id}`}
+                        value={draft.weight}
+                        onChange={(e) => updateDraft(draft.id, { weight: e.target.value })}
+                      />
+                    </ConsoleField>
+                    <ConsoleField label="Port" htmlFor={`port-${draft.id}`}>
+                      <ConsoleInput
+                        id={`port-${draft.id}`}
+                        value={draft.port}
+                        onChange={(e) => updateDraft(draft.id, { port: e.target.value })}
+                      />
+                    </ConsoleField>
+                  </>
+                )}
 
                 <ConsoleField
                   label={
@@ -292,27 +409,6 @@ export default function CreateRecordPage() {
                     </button>
                   </div>
                 </ConsoleField>
-
-                <ConsoleField
-                  label={
-                    <span className="console-label-with-info">
-                      Routing policy <a href="#" className="console-link">Info</a>
-                    </span>
-                  }
-                  htmlFor={`policy-${draft.id}`}
-                >
-                  <ConsoleSelect
-                    id={`policy-${draft.id}`}
-                    value={draft.routingPolicy}
-                    onChange={(e) => updateDraft(draft.id, { routingPolicy: e.target.value })}
-                  >
-                    <option>Simple routing</option>
-                    <option>Weighted routing</option>
-                    <option>Latency routing</option>
-                    <option>Failover routing</option>
-                    <option>Geolocation routing</option>
-                  </ConsoleSelect>
-                </ConsoleField>
               </div>
             </div>
           ))}
@@ -333,8 +429,8 @@ export default function CreateRecordPage() {
             <Link href={`/hosted-zones/${zone.id}`} className="console-link">
               Cancel
             </Link>
-            <button type="submit" className="console-btn console-btn--primary">
-              Create records
+            <button type="submit" className="console-btn console-btn--primary" disabled={submitting}>
+              {submitting ? "Creating…" : "Create records"}
             </button>
           </div>
         </form>
@@ -360,7 +456,7 @@ export default function CreateRecordPage() {
           {existingOpen ? (
             <div className="console-details-panel__body">
               <p className="console-page__muted" style={{ marginBottom: "0.75rem" }}>
-                The following table lists the existing records in {zone.name}.
+                The following table lists the existing records in {domain}.
               </p>
               <h3 className="console-records-header__title" style={{ marginBottom: "0.75rem" }}>
                 Existing records ({existing.length}){" "}
@@ -374,17 +470,6 @@ export default function CreateRecordPage() {
                   value={query}
                   onChange={setQuery}
                 />
-                <div className="console-filter-chips">
-                  <button type="button" className="console-filter-chip">
-                    Type
-                  </button>
-                  <button type="button" className="console-filter-chip">
-                    Routing p…
-                  </button>
-                  <button type="button" className="console-filter-chip">
-                    Alias
-                  </button>
-                </div>
                 <div className="console-table-meta">
                   <button type="button" className="console-icon-btn" aria-label="Previous page">
                     <HiChevronLeft size={14} />
@@ -402,41 +487,29 @@ export default function CreateRecordPage() {
                 <table className="console-table">
                   <thead>
                     <tr>
-                      <th>
-                        <input type="checkbox" disabled aria-label="Select all" />
-                      </th>
                       <th>Record name</th>
                       <th>Type</th>
-                      <th>Routing policy</th>
-                      <th>Differentiator</th>
-                      <th>Alias</th>
                       <th>Value/Route traffic to</th>
                       <th>TTL (seconds)</th>
-                      <th>Health check ID</th>
-                      <th>Evaluate target health</th>
-                      <th>Record ID</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {filteredExisting.map((record) => (
-                      <tr key={record.id}>
-                        <td>
-                          <input type="checkbox" aria-label={`Select ${record.name}`} />
-                        </td>
-                        <td>{record.name}</td>
-                        <td>{record.type}</td>
-                        <td>{record.routingPolicy}</td>
-                        <td>—</td>
-                        <td>No</td>
-                        <td className="console-table__value">{record.value}</td>
-                        <td>{record.ttl.toLocaleString()}</td>
-                        <td>—</td>
-                        <td>—</td>
-                        <td>
-                          <code>{record.id}</code>
+                    {filteredExisting.length === 0 ? (
+                      <tr>
+                        <td colSpan={4} className="console-table__empty">
+                          No records to display
                         </td>
                       </tr>
-                    ))}
+                    ) : (
+                      filteredExisting.map((record) => (
+                        <tr key={record.id}>
+                          <td>{displayDomain(record.name)}</td>
+                          <td>{record.type}</td>
+                          <td className="console-table__value">{record.value}</td>
+                          <td>{record.ttl.toLocaleString()}</td>
+                        </tr>
+                      ))
+                    )}
                   </tbody>
                 </table>
               </div>

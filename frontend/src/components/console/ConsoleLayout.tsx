@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState, type ReactNode } from "react";
-import { ensureMockSession, getMockSession, type MockSession } from "@/lib/mock/session";
+import { useConsoleAuth } from "@/components/console/ConsoleAuthProvider";
 import { ConsoleFooter } from "@/components/console/ConsoleFooter";
 import { GlobalNav } from "@/components/console/GlobalNav";
 import { Route53Sidebar } from "@/components/console/Route53Sidebar";
@@ -22,14 +22,11 @@ export function ConsoleLayout({
   breadcrumb = "Dashboard",
   breadcrumbs,
 }: ConsoleLayoutProps) {
-  const [session, setSession] = useState<MockSession | null>(null);
+  const { session, error: authError } = useConsoleAuth();
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [mobileSidebar, setMobileSidebar] = useState(false);
 
   useEffect(() => {
-    ensureMockSession();
-    setSession(getMockSession());
-
     const mq = window.matchMedia("(max-width: 1023px)");
     const apply = () => {
       if (mq.matches) {
@@ -85,7 +82,17 @@ export function ConsoleLayout({
           />
         ) : null}
         <div className="console-main-column">
-          <main className="console-main">{children}</main>
+          <main className="console-main">
+            {authError ? (
+              <div className="console-auth-banner" role="status">
+                <span>{authError}</span>
+                <Link href="/login" className="console-link">
+                  Sign in
+                </Link>
+              </div>
+            ) : null}
+            {children}
+          </main>
           <ConsoleFooter />
         </div>
       </div>

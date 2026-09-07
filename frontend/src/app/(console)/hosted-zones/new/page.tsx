@@ -7,18 +7,17 @@ import { ConsoleButton } from "@/components/console/ConsoleButton";
 import { ConsoleCard } from "@/components/console/ConsoleCard";
 import { ConsoleLayout } from "@/components/console/ConsoleLayout";
 import { ConsoleField, ConsoleInput, ConsoleTextarea } from "@/components/console/ConsoleInput";
-import type { HostedZoneType } from "@/lib/mock/hostedZones";
-import { useMockDns } from "@/lib/mock/store";
+import { ApiError, createHostedZone, type HostedZoneType } from "@/lib/api";
 
 export default function CreateHostedZonePage() {
   const router = useRouter();
-  const { createZone } = useMockDns();
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [type, setType] = useState<HostedZoneType>("Public");
   const [error, setError] = useState("");
+  const [submitting, setSubmitting] = useState(false);
 
-  const onSubmit = (e: FormEvent) => {
+  const onSubmit = async (e: FormEvent) => {
     e.preventDefault();
     const trimmed = name.trim();
     if (!trimmed) {
@@ -29,8 +28,21 @@ export default function CreateHostedZonePage() {
       setError("Enter a valid domain name (for example, example.com).");
       return;
     }
-    const zone = createZone({ name: trimmed, description, type });
-    router.push(`/hosted-zones/${zone.id}`);
+
+    setSubmitting(true);
+    setError("");
+    try {
+      const zone = await createHostedZone({
+        name: trimmed,
+        comment: description.trim() || undefined,
+        type,
+      });
+      router.push(`/hosted-zones/${zone.id}`);
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : "Failed to create hosted zone.");
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -47,7 +59,7 @@ export default function CreateHostedZonePage() {
         </p>
 
         <ConsoleCard>
-          <form className="console-form" onSubmit={onSubmit}>
+          <form className="console-form" onSubmit={(e) => void onSubmit(e)}>
             <ConsoleField
               label="Domain name"
               htmlFor="hz-name"
@@ -98,8 +110,7 @@ export default function CreateHostedZonePage() {
                 <span>
                   <strong>Private hosted zone</strong>
                   <span className="console-radio__hint">
-                    Create a hosted zone that resolves DNS queries only within selected VPCs
-                    (mocked).
+                    Create a hosted zone that resolves DNS queries only within selected VPCs.
                   </span>
                 </span>
               </label>
@@ -111,8 +122,8 @@ export default function CreateHostedZonePage() {
               <Link href="/hosted-zones" className="console-btn console-btn--normal">
                 Cancel
               </Link>
-              <ConsoleButton type="submit" variant="primary">
-                Create hosted zone
+              <ConsoleButton type="submit" variant="primary" disabled={submitting}>
+                {submitting ? "Creating…" : "Create hosted zone"}
               </ConsoleButton>
             </div>
           </form>

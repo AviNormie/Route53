@@ -1,8 +1,8 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { MockDnsProvider } from "@/lib/mock/store";
+import { ConsoleAuthProvider } from "@/components/console/ConsoleAuthProvider";
 
 export default function ConsoleRouteLayout({ children }: { children: ReactNode }) {
-  return <MockDnsProvider>{children}</MockDnsProvider>;
+  return <ConsoleAuthProvider>{children}</ConsoleAuthProvider>;
 }

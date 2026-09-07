@@ -2,26 +2,60 @@
 
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
-import { useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { FiRefreshCw, FiSettings } from "react-icons/fi";
 import { HiChevronDown, HiChevronLeft, HiChevronRight } from "react-icons/hi";
 import { ConsoleLayout } from "@/components/console/ConsoleLayout";
 import { ConsoleSearch } from "@/components/console/ConsoleInput";
-import { useMockDns } from "@/lib/mock/store";
+import { ConsoleSkeleton } from "@/components/console/ConsoleSkeleton";
+import {
+  ApiError,
+  deleteDnsRecord,
+  deleteHostedZone,
+  displayDomain,
+  getHostedZone,
+  listDnsRecords,
+  type DnsRecord,
+  type HostedZone,
+} from "@/lib/api";
 
 export default function HostedZoneDetailPage() {
   const params = useParams<{ zoneId: string }>();
   const router = useRouter();
   const zoneId = params.zoneId;
-  const { hydrated, getZone, getRecordsForZone, deleteRecord, deleteZone } = useMockDns();
 
-  const zone = getZone(zoneId);
-  const records = getRecordsForZone(zoneId);
-
+  const [zone, setZone] = useState<HostedZone | null>(null);
+  const [records, setRecords] = useState<DnsRecord[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
   const [query, setQuery] = useState("");
   const [detailsOpen, setDetailsOpen] = useState(true);
   const [tab, setTab] = useState<"records" | "recovery" | "dnssec" | "tags">("records");
   const [selected, setSelected] = useState<string[]>([]);
+  const [busy, setBusy] = useState(false);
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    setError("");
+    try {
+      const [z, recs] = await Promise.all([
+        getHostedZone(zoneId),
+        listDnsRecords(zoneId, { page_size: 100 }),
+      ]);
+      setZone(z);
+      setRecords(recs.items);
+    } catch (err) {
+      setZone(null);
+      setRecords([]);
+      setError(err instanceof ApiError ? err.message : "Failed to load hosted zone.");
+    } finally {
+      setLoading(false);
+    }
+  }, [zoneId]);
+
+  useEffect(() => {
+    void load();
+  }, [load]);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -34,22 +68,43 @@ export default function HostedZoneDetailPage() {
     );
   }, [records, query]);
 
-  const onDeleteZone = () => {
+  const onDeleteZone = async () => {
     if (!zone) return;
-    if (!window.confirm(`Delete hosted zone ${zone.name}?`)) return;
-    deleteZone(zone.id);
-    router.push("/hosted-zones");
+    if (!window.confirm(`Delete hosted zone ${displayDomain(zone.name)}?`)) return;
+    setBusy(true);
+    try {
+      await deleteHostedZone(zone.id);
+      router.push("/hosted-zones");
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : "Failed to delete zone.");
+      setBusy(false);
+    }
+  };
+
+  const onDeleteRecords = async () => {
+    if (selected.length === 0) return;
+    if (!window.confirm(`Delete ${selected.length} record(s)?`)) return;
+    setBusy(true);
+    try {
+      await Promise.all(selected.map((id) => deleteDnsRecord(id)));
+      setSelected([]);
+      await load();
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : "Failed to delete records.");
+    } finally {
+      setBusy(false);
+    }
   };
 
   const toggleSelect = (id: string) => {
     setSelected((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
   };
 
-  if (!hydrated) {
+  if (loading) {
     return (
       <ConsoleLayout breadcrumbs={[{ label: "Hosted zones", href: "/hosted-zones" }]}>
-        <div className="console-page">
-          <p className="console-page__muted">Loading hosted zone…</p>
+        <div className="console-page" style={{ maxWidth: "100%" }}>
+          <ConsoleSkeleton rows={6} />
         </div>
       </ConsoleLayout>
     );
@@ -60,6 +115,7 @@ export default function HostedZoneDetailPage() {
       <ConsoleLayout breadcrumbs={[{ label: "Hosted zones", href: "/hosted-zones" }]}>
         <div className="console-page">
           <h1 className="console-page__title">Hosted zone not found</h1>
+          <p className="console-page__muted">{error || "No hosted zone matches this ID."}</p>
           <Link href="/hosted-zones" className="console-btn console-btn--normal">
             Back to hosted zones
           </Link>
@@ -68,24 +124,33 @@ export default function HostedZoneDetailPage() {
     );
   }
 
+  const domain = displayDomain(zone.name);
+
   return (
     <ConsoleLayout
       breadcrumbs={[
         { label: "Hosted zones", href: "/hosted-zones" },
-        { label: zone.name },
+        { label: domain },
       ]}
     >
       <div className="console-page" style={{ maxWidth: "100%" }}>
+        {error ? <p className="console-inline-msg console-inline-msg--error">{error}</p> : null}
+
         <div className="console-zone-header">
           <div className="console-zone-header__title-row">
             <span className="console-badge">{zone.type}</span>
-            <h1 className="console-page__title">{zone.name}</h1>
+            <h1 className="console-page__title">{domain}</h1>
             <a href="#" className="console-link">
               Info
             </a>
           </div>
           <div className="console-zone-header__actions">
-            <button type="button" className="console-btn console-btn--normal" onClick={onDeleteZone}>
+            <button
+              type="button"
+              className="console-btn console-btn--normal"
+              disabled={busy}
+              onClick={() => void onDeleteZone()}
+            >
               Delete zone
             </button>
             <button type="button" className="console-btn console-btn--normal">
@@ -112,20 +177,14 @@ export default function HostedZoneDetailPage() {
               />
               Hosted zone details
             </span>
-            <span
-              className="console-btn console-btn--normal"
-              role="link"
-              onClick={(e) => e.stopPropagation()}
-            >
-              Edit hosted zone
-            </span>
+            <span className="console-btn console-btn--normal">Edit hosted zone</span>
           </button>
           {detailsOpen ? (
             <div className="console-details-panel__body">
               <dl className="console-detail-grid">
                 <div>
                   <dt>Domain name</dt>
-                  <dd>{zone.name}</dd>
+                  <dd>{domain}</dd>
                 </div>
                 <div>
                   <dt>Hosted zone ID</dt>
@@ -139,11 +198,11 @@ export default function HostedZoneDetailPage() {
                 </div>
                 <div>
                   <dt>Description</dt>
-                  <dd>{zone.description || "—"}</dd>
+                  <dd>{zone.comment || "—"}</dd>
                 </div>
                 <div>
                   <dt>Record count</dt>
-                  <dd>{zone.recordCount}</dd>
+                  <dd>{zone.record_count}</dd>
                 </div>
               </dl>
             </div>
@@ -182,17 +241,19 @@ export default function HostedZoneDetailPage() {
                 </a>
               </h2>
               <div className="console-hz-toolbar__actions">
-                <button type="button" className="console-icon-btn" aria-label="Refresh">
+                <button
+                  type="button"
+                  className="console-icon-btn"
+                  aria-label="Refresh"
+                  onClick={() => void load()}
+                >
                   <FiRefreshCw size={15} />
                 </button>
                 <button
                   type="button"
                   className="console-btn console-btn--ghost"
-                  disabled={selected.length === 0}
-                  onClick={() => {
-                    selected.forEach((id) => deleteRecord(id));
-                    setSelected([]);
-                  }}
+                  disabled={selected.length === 0 || busy}
+                  onClick={() => void onDeleteRecords()}
                 >
                   Delete record
                 </button>
@@ -272,18 +333,22 @@ export default function HostedZoneDetailPage() {
                             type="checkbox"
                             checked={selected.includes(record.id)}
                             onChange={() => toggleSelect(record.id)}
-                            aria-label={`Select ${record.name}`}
+                            aria-label={`Select ${displayDomain(record.name)}`}
                           />
                         </td>
-                        <td>{record.name}</td>
+                        <td>{displayDomain(record.name)}</td>
                         <td>{record.type}</td>
-                        <td>{record.routingPolicy}</td>
-                        <td>{record.differentiator ?? "—"}</td>
-                        <td>{record.alias ? "Yes" : "No"}</td>
-                        <td className="console-table__value">{record.value}</td>
+                        <td>Simple</td>
+                        <td>—</td>
+                        <td>No</td>
+                        <td className="console-table__value">
+                          {record.priority != null
+                            ? `${record.priority} ${record.value}`
+                            : record.value}
+                        </td>
                         <td>{record.ttl.toLocaleString()}</td>
-                        <td>{record.healthCheckId ?? "—"}</td>
-                        <td>{record.evaluateTargetHealth ? "Yes" : "—"}</td>
+                        <td>—</td>
+                        <td>—</td>
                       </tr>
                     ))
                   )}
