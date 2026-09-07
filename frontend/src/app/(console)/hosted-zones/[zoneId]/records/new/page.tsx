@@ -25,6 +25,7 @@ import {
   type DnsRecordType,
   type HostedZone,
 } from "@/lib/api";
+import { notifyRecordsChanged } from "@/lib/console-notifications";
 
 const RECORD_TYPE_OPTIONS: { value: DnsRecordType; label: string }[] = [
   { value: "A", label: "A – Routes traffic to an IPv4 address and some AWS resources" },
@@ -161,6 +162,12 @@ export default function CreateRecordPage() {
           caa_tag: draft.type === "CAA" ? "issue" : undefined,
         });
       }
+      notifyRecordsChanged({
+        zoneName: displayDomain(zone.name),
+        zoneId: zone.id,
+        action: "created",
+        count: drafts.length,
+      });
       router.push(`/hosted-zones/${zone.id}`);
     } catch (err) {
       setError(

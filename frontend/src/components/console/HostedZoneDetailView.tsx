@@ -44,6 +44,10 @@ import {
   type DnsRecord,
   type HostedZone,
 } from "@/lib/api";
+import {
+  notifyHostedZoneDeleted,
+  notifyRecordsChanged,
+} from "@/lib/console-notifications";
 
 const RECORD_TYPE_OPTIONS = [
   "A",
@@ -293,6 +297,12 @@ export function HostedZoneDetailView({ zoneId }: { zoneId: string }) {
         value: form.value,
         ttl,
       });
+      notifyRecordsChanged({
+        zoneName: domain,
+        zoneId: zone.id,
+        action: "updated",
+        recordLabel: `${editing.type} record ${displayDomain(form.name)}`,
+      });
       setEditing(null);
       setPanelMode("details");
       await load();
@@ -324,9 +334,16 @@ export function HostedZoneDetailView({ zoneId }: { zoneId: string }) {
     setBusy(true);
     setError(null);
     try {
+      const deletedCount = selectedIds.size;
       for (const id of Array.from(selectedIds)) {
         await deleteDnsRecord(id);
       }
+      notifyRecordsChanged({
+        zoneName: domain,
+        zoneId: zone.id,
+        action: "deleted",
+        count: deletedCount,
+      });
       setSelectedIds(new Set());
       setPendingDelete(false);
       await load();
@@ -342,6 +359,7 @@ export function HostedZoneDetailView({ zoneId }: { zoneId: string }) {
     setBusy(true);
     try {
       await deleteHostedZone(zone.id);
+      notifyHostedZoneDeleted(domain);
       router.push("/hosted-zones");
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Failed to delete hosted zone");
@@ -895,6 +913,7 @@ export function HostedZoneDetailView({ zoneId }: { zoneId: string }) {
         {importOpen ? (
           <ImportRecordsPanel
             zoneId={zoneId}
+            zoneName={domain}
             onClose={() => setImportOpen(false)}
             onImported={async () => {
               await load();

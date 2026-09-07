@@ -12,9 +12,11 @@ import {
   type BindImportPreview,
   type BindImportResult,
 } from "@/lib/api";
+import { notifyRecordsChanged } from "@/lib/console-notifications";
 
 type ImportRecordsPanelProps = {
   zoneId: string;
+  zoneName: string;
   onClose: () => void;
   onImported: () => void | Promise<void>;
 };
@@ -47,6 +49,7 @@ function statusLabel(status: string): string {
 
 export function ImportRecordsPanel({
   zoneId,
+  zoneName,
   onClose,
   onImported,
 }: ImportRecordsPanelProps) {
@@ -151,6 +154,14 @@ export function ImportRecordsPanel({
       });
       setResult(data);
       setStep("result");
+      if (data.imported > 0) {
+        notifyRecordsChanged({
+          zoneName,
+          zoneId,
+          action: "imported",
+          count: data.imported,
+        });
+      }
       await onImported();
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Import failed");

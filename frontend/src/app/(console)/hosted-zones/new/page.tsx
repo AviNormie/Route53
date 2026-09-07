@@ -5,7 +5,8 @@ import { useRouter } from "next/navigation";
 import { useId, useState, type FormEvent } from "react";
 import { FiSearch, FiXCircle } from "react-icons/fi";
 import { ConsoleLayout } from "@/components/console/ConsoleLayout";
-import { ApiError, createHostedZone, type HostedZoneType } from "@/lib/api";
+import { ApiError, createHostedZone, displayDomain, type HostedZoneType } from "@/lib/api";
+import { notifyHostedZoneCreated } from "@/lib/console-notifications";
 
 const DESC_MAX = 256;
 const TAG_LIMIT = 50;
@@ -91,6 +92,7 @@ export default function CreateHostedZonePage() {
         comment: description.trim() || undefined,
         type,
       });
+      notifyHostedZoneCreated(displayDomain(zone.name), zone.id);
       router.push(`/hosted-zones/${zone.id}?created=1`);
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Failed to create hosted zone.");

@@ -11,6 +11,8 @@ import {
   FiSettings,
 } from "react-icons/fi";
 import { FaAws } from "react-icons/fa";
+import { NotificationsPopover } from "@/components/console/NotificationsPopover";
+import { useConsoleNotifications } from "@/components/console/NotificationsProvider";
 import { TriangleDownIcon, TriangleUpIcon } from "@/components/console/TriangleDownIcon";
 import { UserSettingsPopover } from "@/components/console/UserSettingsPopover";
 import { logout } from "@/lib/api";
@@ -208,15 +210,18 @@ function AccountMenu({
 
 export function GlobalNav({ session, amazonQOpen = false, onToggleAmazonQ }: GlobalNavProps) {
   const router = useRouter();
+  const { unreadCount, markAllRead } = useConsoleNotifications();
   const [menuOpen, setMenuOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [notificationsOpen, setNotificationsOpen] = useState(false);
   const accountRef = useRef<HTMLDivElement>(null);
   const settingsRef = useRef<HTMLDivElement>(null);
+  const notificationsRef = useRef<HTMLDivElement>(null);
   const username = session?.name ?? "avi";
   const workgroupLabel = session?.workgroup ?? `${ACCOUNT_NAME} (${ACCOUNT_ID})`;
 
   useEffect(() => {
-    if (!menuOpen && !settingsOpen) return;
+    if (!menuOpen && !settingsOpen && !notificationsOpen) return;
 
     const onPointerDown = (event: MouseEvent) => {
       const target = event.target as Node;
@@ -226,11 +231,15 @@ export function GlobalNav({ session, amazonQOpen = false, onToggleAmazonQ }: Glo
       if (settingsOpen && !settingsRef.current?.contains(target)) {
         setSettingsOpen(false);
       }
+      if (notificationsOpen && !notificationsRef.current?.contains(target)) {
+        setNotificationsOpen(false);
+      }
     };
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
         setMenuOpen(false);
         setSettingsOpen(false);
+        setNotificationsOpen(false);
       }
     };
 
@@ -240,11 +249,12 @@ export function GlobalNav({ session, amazonQOpen = false, onToggleAmazonQ }: Glo
       document.removeEventListener("mousedown", onPointerDown);
       document.removeEventListener("keydown", onKeyDown);
     };
-  }, [menuOpen, settingsOpen]);
+  }, [menuOpen, settingsOpen, notificationsOpen]);
 
   const onSignOut = async () => {
     setMenuOpen(false);
     setSettingsOpen(false);
+    setNotificationsOpen(false);
     try {
       await logout();
     } finally {
@@ -301,9 +311,37 @@ export function GlobalNav({ session, amazonQOpen = false, onToggleAmazonQ }: Glo
             </span>
           </button>
           <span className="console-global-nav__vsep" aria-hidden="true" />
-          <button type="button" className="console-global-nav__icon-btn" aria-label="Notifications">
-            <FiBell size={16} aria-hidden="true" />
-          </button>
+          <div className="console-notifications" ref={notificationsRef}>
+            <button
+              type="button"
+              className={`console-global-nav__icon-btn${notificationsOpen ? " is-active" : ""}`}
+              aria-label={
+                unreadCount > 0 ? `Notifications, ${unreadCount} unread` : "Notifications"
+              }
+              aria-expanded={notificationsOpen}
+              aria-haspopup="dialog"
+              onClick={() => {
+                setNotificationsOpen((v) => {
+                  const next = !v;
+                  if (next) markAllRead();
+                  return next;
+                });
+                setSettingsOpen(false);
+                setMenuOpen(false);
+              }}
+            >
+              <FiBell size={16} aria-hidden="true" />
+              {unreadCount > 0 ? (
+                <span className="console-global-nav__badge" aria-hidden="true">
+                  {unreadCount > 9 ? "9+" : unreadCount}
+                </span>
+              ) : null}
+            </button>
+            <NotificationsPopover
+              open={notificationsOpen}
+              onNavigate={() => setNotificationsOpen(false)}
+            />
+          </div>
           <span className="console-global-nav__vsep" aria-hidden="true" />
           <button type="button" className="console-global-nav__icon-btn" aria-label="Help">
             <FiHelpCircle size={16} aria-hidden="true" />
@@ -319,6 +357,7 @@ export function GlobalNav({ session, amazonQOpen = false, onToggleAmazonQ }: Glo
               onClick={() => {
                 setSettingsOpen((v) => !v);
                 setMenuOpen(false);
+                setNotificationsOpen(false);
               }}
             >
               <FiSettings size={16} aria-hidden="true" />
@@ -341,6 +380,7 @@ export function GlobalNav({ session, amazonQOpen = false, onToggleAmazonQ }: Glo
             onClick={() => {
               setMenuOpen((v) => !v);
               setSettingsOpen(false);
+              setNotificationsOpen(false);
             }}
           >
             <span>{workgroupLabel}</span>

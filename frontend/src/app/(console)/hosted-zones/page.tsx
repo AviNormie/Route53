@@ -16,6 +16,7 @@ import {
   listHostedZones,
   type HostedZone,
 } from "@/lib/api";
+import { notifyHostedZoneDeleted } from "@/lib/console-notifications";
 
 function SortLabel({ children }: { children: string }) {
   return (
@@ -112,7 +113,9 @@ export default function HostedZonesPage() {
     setBusy(true);
     try {
       for (const id of selectedList) {
+        const zone = zones.find((z) => z.id === id);
         await deleteHostedZone(id);
+        if (zone) notifyHostedZoneDeleted(displayDomain(zone.name));
       }
       setSelectedIds(new Set());
       await load(query);
