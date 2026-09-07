@@ -58,7 +58,7 @@ export function AwsNavbar() {
           </button>
 
           <Link
-            href="/login"
+            href="/dashboard"
             className="hidden text-sm font-medium text-aws-ink hover:underline md:inline"
           >
             Sign in to console
@@ -101,7 +101,7 @@ export function AwsNavbar() {
                 {label}
               </a>
             ))}
-            <Link href="/login" className="rounded-md px-2 py-2 text-sm font-medium hover:bg-aws-muted-bg">
+            <Link href="/dashboard" className="rounded-md px-2 py-2 text-sm font-medium hover:bg-aws-muted-bg">
               Sign in to console
             </Link>
             <span className="gradient-glow gradient-glow--block mt-2 sm:hidden">
