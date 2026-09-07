@@ -1,0 +1,44 @@
+# OS / editor
+.DS_Store
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Frontend
+frontend/node_modules/
+frontend/.next/
+frontend/out/
+frontend/.env
+frontend/.env.local
+frontend/.env*.local
+frontend/yarn-error.log
+frontend/tsconfig.tsbuildinfo
+
+# Backend
+backend/__pycache__/
+backend/**/__pycache__/
+backend/.pytest_cache/
+backend/.venv/
+backend/venv/
+backend/.env
+backend/*.pyc
+backend/**/*.pyc
+backend/data/*.db
+backend/*.egg-info/
+backend/.mypy_cache/
+backend/.ruff_cache/
+
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.venv/
+venv/
+
+# Env
+.env
+.env.local
+
+# Logs
+*.log
