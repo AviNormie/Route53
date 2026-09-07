@@ -64,12 +64,14 @@ export function AwsNavbar() {
             Sign in to console
           </Link>
 
-          <a
-            href="#"
-            className="btn-pill btn-pill-primary hidden h-12 w-[175px] px-0 text-sm sm:inline-flex"
-          >
-            Create account
-          </a>
+          <span className="gradient-glow gradient-glow--circle hidden rounded-full sm:inline-flex">
+            <a
+              href="#"
+              className="btn-pill btn-pill-primary h-12 w-[175px] px-0 text-sm"
+            >
+              Create account
+            </a>
+          </span>
 
           <button
             type="button"
@@ -102,9 +104,11 @@ export function AwsNavbar() {
             <Link href="/login" className="rounded-md px-2 py-2 text-sm font-medium hover:bg-aws-muted-bg">
               Sign in to console
             </Link>
-            <a href="#" className="btn-pill btn-pill-primary mt-2 w-full sm:hidden">
-              Create account
-            </a>
+            <span className="gradient-glow gradient-glow--block mt-2 sm:hidden">
+              <a href="#" className="btn-pill btn-pill-primary w-full">
+                Create account
+              </a>
+            </span>
           </nav>
         </div>
       ) : null}

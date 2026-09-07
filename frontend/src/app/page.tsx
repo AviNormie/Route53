@@ -20,7 +20,7 @@ export const metadata: Metadata = {
 export default function HomePage() {
   return (
     <>
-      <div className="sticky top-0 z-50">
+      <div className="sticky top-0 z-50 overflow-visible">
         <AwsTopBar />
         <AwsNavbar />
       </div>

@@ -1,14 +1,45 @@
+"use client";
+
+import Link from "next/link";
+import { useEffect, useId, useRef, useState } from "react";
 import { ChevronDownIcon, GlobeIcon, UserIcon } from "@/components/ui/icons";
 
 const links = [
   { label: "Contact us", href: "#" },
   { label: "AWS Marketplace", href: "#" },
-];
+] as const;
 
 export function AwsTopBar() {
+  const [profileOpen, setProfileOpen] = useState(false);
+  const menuId = useId();
+  const rootRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!profileOpen) return;
+
+    const onPointerDown = (event: MouseEvent) => {
+      if (!rootRef.current?.contains(event.target as Node)) {
+        setProfileOpen(false);
+      }
+    };
+
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setProfileOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", onPointerDown);
+    document.addEventListener("keydown", onKeyDown);
+    return () => {
+      document.removeEventListener("mousedown", onPointerDown);
+      document.removeEventListener("keydown", onKeyDown);
+    };
+  }, [profileOpen]);
+
   return (
-    <div className="bg-aws-topbar text-white">
-      <div className="page-shell flex h-[58px] items-center justify-end gap-4 text-[13px] sm:gap-5">
+    <div className="relative z-[60] overflow-visible bg-aws-topbar text-white">
+      <div className="page-shell flex h-[58px] items-center justify-end gap-4 overflow-visible text-[13px] sm:gap-5">
         <button
           type="button"
           className="inline-flex items-center gap-1.5 rounded-sm hover:underline"
@@ -44,13 +75,50 @@ export function AwsTopBar() {
           <ChevronDownIcon />
         </button>
 
-        <button
-          type="button"
-          className="grid size-8 place-items-center rounded-full border border-white/40"
-          aria-label="Account"
-        >
-          <UserIcon />
-        </button>
+        <div ref={rootRef} className="relative overflow-visible">
+          <span
+            className={`gradient-glow gradient-glow--circle ${profileOpen ? "is-glowing" : ""}`}
+          >
+            <button
+              type="button"
+              className="grid size-8 place-items-center rounded-full border border-white/50 bg-aws-topbar"
+              aria-label="AWS Profile"
+              aria-haspopup="dialog"
+              aria-expanded={profileOpen}
+              aria-controls={menuId}
+              onClick={() => setProfileOpen((value) => !value)}
+            >
+              <UserIcon />
+            </button>
+          </span>
+
+          <div
+            className={`profile-menu-panel ${profileOpen ? "is-open" : ""}`}
+            aria-hidden={!profileOpen}
+          >
+            <div
+              className={` gradient-glow--card ${profileOpen ? "is-glowing" : ""}`}
+            >
+              <div id={menuId} role="dialog" aria-label="AWS Profile" className="profile-menu">
+                <h2 className="profile-menu__title">AWS Profile</h2>
+                <p className="profile-menu__body">
+                  Your profile helps improve your interactions with select AWS experiences.
+                </p>
+                <span
+                  className={`hover:gradient-glow ${profileOpen ? "is-glowing" : ""}`}
+                >
+                  <Link
+                    href="/login"
+                    className="btn-pill btn-pill-primary profile-menu__cta"
+                    onClick={() => setProfileOpen(false)}
+                  >
+                    Create profile or sign in
+                  </Link>
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );
