@@ -16,7 +16,7 @@
   --aws-footer-heading: #ffffff;
   --aws-muted-bg: #f2f3f3;
   --content-max: 80rem; /* 1600px — wider than 1450 so Mac side gaps shrink */
-  --header-offset: 7.625rem; /* top bar (58px) + main nav (~64px) */
+  --header-offset: 7.625rem; /* top bar (50px) + main nav (~72px) */
   --page-gutter: 1.5rem; /* 24px fixed */
   --section-space: clamp(3.5rem, 7vw, 5.5rem);
   --font-sans: var(--font-inter), "Helvetica Neue", Helvetica, Arial, sans-serif;

@@ -35,7 +35,7 @@ export function AwsNavbar() {
 
   return (
     <header className="border-b border-aws-border bg-white">
-      <div className="page-shell page-shell--nav flex min-h-[64px] items-center justify-between gap-4 py-2">
+      <div className="page-shell page-shell--nav flex min-h-[72px] items-center justify-between gap-4 py-3">
         <div className="flex min-w-0 items-center gap-3 lg:gap-4">
           <Link
             href="/"

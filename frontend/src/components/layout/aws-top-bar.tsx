@@ -39,7 +39,7 @@ export function AwsTopBar() {
 
   return (
     <div className="relative z-[60] overflow-visible bg-aws-topbar text-white">
-      <div className="page-shell page-shell--nav flex h-[58px] items-center justify-end gap-4 overflow-visible text-[13px] sm:gap-5">
+      <div className="page-shell page-shell--nav flex h-[50px] items-center justify-end gap-4 overflow-visible text-[13px] sm:gap-5">
         <button
           type="button"
           className="inline-flex items-center gap-1.5 rounded-sm hover:underline"
