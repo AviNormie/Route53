@@ -9,6 +9,12 @@ from app.services import auth_service
 router = APIRouter(prefix="/auth", tags=["auth"])
 
 
+def _cookie_samesite(*, secure: bool) -> str:
+    # Cross-site SPAs (e.g. Vercel → Render) need SameSite=None; Secure.
+    # Localhost same-site/dev keeps Lax so cookies still work over http.
+    return "none" if secure else "lax"
+
+
 def _set_session_cookie(
     response: Response,
     session_id: str,
@@ -21,7 +27,7 @@ def _set_session_cookie(
         value=session_id,
         httponly=True,
         secure=secure,
-        samesite="lax",
+        samesite=_cookie_samesite(secure=secure),
         max_age=max_age_seconds,
         path="/",
     )
@@ -33,7 +39,7 @@ def _clear_session_cookie(response: Response, *, secure: bool) -> None:
         path="/",
         httponly=True,
         secure=secure,
-        samesite="lax",
+        samesite=_cookie_samesite(secure=secure),
     )
 
 

@@ -170,13 +170,28 @@ Open `http://localhost:3000` (or the next free port Yarn prints, e.g. `3002`).
 ### Auth model
 
 - **Session cookie** auth (not JWT)
-- Cookie: HttpOnly, `SameSite=Lax`; `Secure` in production
+- Cookie: HttpOnly; `SameSite=Lax` in dev; `Secure` + `SameSite=None` in production (required for Vercel ↔ Render)
 - Login rate-limited via `LOGIN_RATE_LIMIT`
 - Logout deletes the session row and clears the cookie
 
 ### CORS
 
-`CORS_ORIGINS` must include the frontend origin(s). Credentials are enabled so browsers attach the session cookie on cross-origin API calls during local development.
+`CORS_ORIGINS` must include the frontend origin(s) **without a trailing slash** (e.g. `https://your-app.vercel.app`). Credentials are enabled so browsers attach the session cookie on cross-origin API calls.
+
+### Deploy checklist (Vercel frontend + Render API)
+
+**Render (backend) env**
+
+- `ENVIRONMENT=prod`
+- `CORS_ORIGINS=https://your-frontend.vercel.app` (exact browser origin, no trailing `/`)
+- `SESSION_SECRET` set to a long random value
+- `DATABASE_URL` and demo user vars as needed
+
+**Vercel (frontend) env**
+
+- `NEXT_PUBLIC_API_URL=https://your-api.onrender.com` (no trailing `/`)
+
+Redeploy both after changing env vars.
 
 ---
 

@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useState, type ReactNode } from "react";
 import { AmazonQPanel } from "@/components/console/AmazonQPanel";
 import { useConsoleAuth } from "@/components/console/ConsoleAuthProvider";
+import { useConsoleTheme } from "@/components/console/ConsoleThemeProvider";
 import { ConsoleFooter } from "@/components/console/ConsoleFooter";
 import { GlobalNav } from "@/components/console/GlobalNav";
 import { Route53Sidebar } from "@/components/console/Route53Sidebar";
@@ -24,6 +25,7 @@ export function ConsoleLayout({
   breadcrumbs,
 }: ConsoleLayoutProps) {
   const { session, error: authError } = useConsoleAuth();
+  const { resolvedTheme } = useConsoleTheme();
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [mobileSidebar, setMobileSidebar] = useState(false);
   const [amazonQOpen, setAmazonQOpen] = useState(false);
@@ -55,7 +57,10 @@ export function ConsoleLayout({
   const closeMobile = () => setMobileSidebar(false);
 
   return (
-    <div className={`console-shell${amazonQOpen ? " is-amazon-q-open" : ""}`}>
+    <div
+      className={`console-shell${amazonQOpen ? " is-amazon-q-open" : ""}`}
+      data-console-theme={resolvedTheme}
+    >
       <GlobalNav
         session={session}
         amazonQOpen={amazonQOpen}

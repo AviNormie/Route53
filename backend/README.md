@@ -68,6 +68,11 @@ Session-cookie auth (not JWT):
 - `POST /api/v1/auth/logout`
 - `GET /api/v1/auth/me`
 
+For a Vercel frontend talking to this API on another host (e.g. Render), set:
+
+- `ENVIRONMENT=prod` → session cookie is `Secure` + `SameSite=None`
+- `CORS_ORIGINS=https://your-app.vercel.app` (no trailing slash)
+
 Seed the demo user:
 
 ```bash

@@ -53,13 +53,22 @@ class Settings(BaseSettings):
         description="Optional path to Aiven CA cert for VERIFY_CA / VERIFY_IDENTITY",
     )
 
+    @staticmethod
+    def _normalize_origin(origin: str) -> str:
+        # Browsers send Origin without a trailing slash; tolerate misconfigured envs.
+        return origin.strip().rstrip("/")
+
     @field_validator("cors_origins", mode="before")
     @classmethod
     def parse_cors_origins(cls, value: object) -> list[str]:
         if value is None:
             return ["http://localhost:3000"]
         if isinstance(value, list):
-            return [str(origin).strip() for origin in value if str(origin).strip()]
+            return [
+                cls._normalize_origin(str(origin))
+                for origin in value
+                if str(origin).strip()
+            ]
         if isinstance(value, str):
             raw = value.strip()
             if not raw:
@@ -70,10 +79,16 @@ class Settings(BaseSettings):
                 parsed = json.loads(raw)
                 if isinstance(parsed, list):
                     return [
-                        str(origin).strip() for origin in parsed if str(origin).strip()
+                        cls._normalize_origin(str(origin))
+                        for origin in parsed
+                        if str(origin).strip()
                     ]
                 raise ValueError("CORS_ORIGINS JSON must be a list")
-            return [origin.strip() for origin in raw.split(",") if origin.strip()]
+            return [
+                cls._normalize_origin(origin)
+                for origin in raw.split(",")
+                if origin.strip()
+            ]
         raise TypeError("CORS_ORIGINS must be a string or list")
 
     @model_validator(mode="after")

@@ -22,13 +22,14 @@
   --font-sans: var(--font-inter), "Helvetica Neue", Helvetica, Arial, sans-serif;
   --font-display: var(--font-nunito), "Helvetica Neue", Helvetica, Arial, sans-serif;
 
-  /* AWS Route 53 console (dark) */
-  --console-bg: #0f141a;
-  --console-bg-elevated: rgb(22, 29, 38);
-  --console-bg-nav: #16191f;
-  --console-bg-sidebar: rgb(22, 29, 38);
-  --console-bg-input: #0f141a;
+  /* AWS Route 53 console — dark defaults (#131920 / #151d26) */
+  --console-bg: #131920;
+  --console-bg-elevated: #151d26;
+  --console-bg-nav: #151d26;
+  --console-bg-sidebar: #151d26;
+  --console-bg-input: #131920;
   --console-bg-chrome: rgb(125, 137, 152);
+  --console-bg-popover: #151d26;
   --console-border: #414750;
   --console-border-strong: #687078;
   --console-text: #d1d5db;
@@ -51,6 +52,8 @@
   --console-radius-sm: 6px;
   --console-radius-pill: 20px;
   --console-font: "Amazon Ember", "Helvetica Neue", Helvetica, Arial, sans-serif;
+  --console-hover-surface: rgb(255 255 255 / 0.06);
+  --console-icon: #f1f1f1;
 
   /* Route 53 hero gradient theme */
   --rg-gradient-angle: 96deg;
@@ -2039,7 +2042,7 @@ img {
   flex: 1;
   min-width: 200px;
   border-radius: var(--console-radius);
-  background: #0f141a;
+  background: var(--console-bg-input);
   border-color: var(--console-border-strong);
   color: var(--console-text-muted);
 }
@@ -2495,6 +2498,54 @@ img {
   font-family: var(--console-font);
   font-size: 14px;
   line-height: 1.4;
+  color-scheme: dark;
+}
+
+.console-shell[data-console-theme="light"] {
+  --console-bg: #f2f3f3;
+  --console-bg-elevated: #ffffff;
+  --console-bg-nav: #232f3e;
+  --console-bg-sidebar: #ffffff;
+  --console-bg-input: #ffffff;
+  --console-bg-chrome: #687078;
+  --console-bg-popover: #ffffff;
+  --console-border: #d5dbdb;
+  --console-border-strong: #aab7b8;
+  --console-text: #16191f;
+  --console-text-strong: #16191f;
+  --console-text-muted: #545b64;
+  --console-link: #0073bb;
+  --console-link-hover: #005a8c;
+  --console-accent: #0972d3;
+  --console-active: #0972d3;
+  --console-focus: #0972d3;
+  --console-hover-surface: rgb(0 0 0 / 0.05);
+  --console-icon: #f1f1f1;
+  color-scheme: light;
+}
+
+/* Top nav stays dark in light mode (AWS console pattern); content uses light vars */
+.console-shell[data-console-theme="light"] .console-global-nav,
+.console-shell[data-console-theme="light"] .console-utility-bar,
+.console-shell[data-console-theme="light"] .console-account__trigger {
+  color-scheme: dark;
+}
+
+.console-shell[data-console-theme="light"] .console-main,
+.console-shell[data-console-theme="light"] .console-sidebar,
+.console-shell[data-console-theme="light"] .console-breadcrumb,
+.console-shell[data-console-theme="light"] .console-footer {
+  color: var(--console-text);
+}
+
+.console-shell[data-console-theme="light"] .console-settings-menu {
+  --console-bg-popover: #ffffff;
+  --console-text-strong: #16191f;
+  --console-text-muted: #545b64;
+  --console-border: #d5dbdb;
+  --console-border-strong: #aab7b8;
+  --console-bg-input: #ffffff;
+  color: #16191f;
 }
 
 .console-shell__below-nav {
@@ -2520,7 +2571,7 @@ img {
   max-width: 420px;
   min-height: 0;
   border-right: 1px solid rgb(66, 180, 255);
-  background: #12151c;
+  background: var(--console-bg-elevated);
   animation: console-amazon-q-in 0.22s ease-out;
   z-index: 45;
 }
@@ -2611,7 +2662,7 @@ img {
   padding: 0.75rem 2.5rem 1.75rem 0.75rem;
   border: 1px solid var(--console-border-strong);
   border-radius: 10px;
-  background: #0f141a;
+  background: var(--console-bg-input);
   color: var(--console-text-strong);
   resize: vertical;
   outline: none;
@@ -2710,7 +2761,7 @@ img {
 }
 
 .console-global-nav__icon-btn.is-active {
-  background: rgb(255 255 255 / 0.1);
+  background: var(--console-hover-surface);
   color: #fff;
 }
 
@@ -2810,7 +2861,7 @@ img {
   padding: 0.75rem 0 0.85rem;
   border: 1px solid var(--console-border);
   border-radius: var(--console-radius);
-  background: #16191f;
+  background: var(--console-bg-popover);
   box-shadow: 0 12px 28px rgb(0 0 0 / 0.45);
 }
 
@@ -2982,13 +3033,121 @@ img {
   border: 0;
   border-radius: var(--console-radius);
   background: transparent;
-  color: #f1f1f1;
+  color: var(--console-icon);
   cursor: pointer;
 }
 
-.console-global-nav__icon-btn:hover {
-  background: rgb(255 255 255 / 0.08);
+.console-global-nav__icon-btn:hover,
+.console-global-nav__icon-btn.is-active {
+  background: var(--console-hover-surface);
   color: #fff;
+}
+
+.console-settings {
+  position: relative;
+}
+
+.console-settings-menu {
+  position: absolute;
+  top: calc(100% + 10px);
+  right: 0;
+  z-index: 80;
+  width: min(320px, calc(100vw - 1rem));
+  padding: 1rem 1rem 0.9rem;
+  border: 1px solid var(--console-border);
+  border-radius: var(--console-radius);
+  background: var(--console-bg-popover);
+  box-shadow: 0 12px 28px rgb(0 0 0 / 0.45);
+  color: var(--console-text-strong);
+}
+
+.console-settings-menu__title {
+  margin: 0 0 1rem;
+  color: var(--console-text-strong);
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 1.3;
+}
+
+.console-settings-menu__section {
+  margin-bottom: 1.1rem;
+}
+
+.console-settings-menu__label {
+  display: block;
+  margin: 0 0 0.45rem;
+  color: var(--console-text-muted);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.console-settings-menu__label em {
+  font-style: italic;
+  font-weight: 500;
+}
+
+.console-settings-menu__select {
+  width: 100%;
+}
+
+.console-settings-menu__radios {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+}
+
+.console-settings-menu__radio {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  color: var(--console-text-strong);
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.console-settings-menu__radio input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.console-settings-menu__radio-ui {
+  position: relative;
+  width: 16px;
+  height: 16px;
+  border: 2px solid var(--console-border-strong);
+  border-radius: 50%;
+  flex-shrink: 0;
+  background: transparent;
+}
+
+.console-settings-menu__radio input:checked + .console-settings-menu__radio-ui {
+  border-color: var(--console-active);
+}
+
+.console-settings-menu__radio input:checked + .console-settings-menu__radio-ui::after {
+  content: "";
+  position: absolute;
+  inset: 3px;
+  border-radius: 50%;
+  background: var(--console-active);
+}
+
+.console-settings-menu__radio:hover .console-settings-menu__radio-ui {
+  border-color: var(--console-active);
+}
+
+.console-settings-menu__footer-link {
+  display: inline-block;
+  margin-top: 0.15rem;
+  color: var(--console-link);
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.console-settings-menu__footer-link:hover {
+  color: var(--console-link-hover);
+  text-decoration: underline;
 }
 
 .console-global-nav__service-mark {
@@ -3016,7 +3175,7 @@ img {
   border-top-right-radius: 8px;
   border-bottom-left-radius: 0;
   border-bottom-right-radius: 0;
-  background: #0f141a;
+  background: var(--console-bg-input);
   color: #d5dbdb;
 }
 
@@ -3641,7 +3800,7 @@ a.console-btn.is-disabled {
   outline: none;
   font: inherit;
   font-size: 13px;
-  color-scheme: dark;
+  color-scheme: inherit;
 }
 
 .console-input::placeholder,
@@ -3651,7 +3810,7 @@ a.console-btn.is-disabled {
 }
 
 .console-select option {
-  background: #0f141a;
+  background: var(--console-bg-elevated);
   color: var(--console-text-strong);
 }
 
@@ -4364,7 +4523,7 @@ a.console-btn.is-disabled {
   padding: 0 0.55rem;
   border: 1px solid var(--console-border-strong);
   border-radius: var(--console-radius-sm);
-  background: #0f141a;
+  background: var(--console-bg-input);
   color: var(--console-text-muted);
 }
 
@@ -4768,7 +4927,7 @@ a.console-btn.is-disabled {
   padding: 0.35rem 0.65rem 0.35rem 2rem;
   border: 1px solid #687078;
   border-radius: 6px;
-  background: #0f141a;
+  background: var(--console-bg-input);
   color: #fff;
   font: inherit;
   font-size: 14px;
@@ -5365,7 +5524,7 @@ a.console-btn.is-disabled {
   padding: 1.5rem;
   border: 1px dashed #687078;
   border-radius: 8px;
-  background: #0f141a;
+  background: var(--console-bg-input);
   color: #aab7b8;
   text-align: center;
 }
@@ -5389,7 +5548,7 @@ a.console-btn.is-disabled {
   padding: 0.75rem 0.9rem;
   border: 1px solid #414d5c;
   border-radius: 8px;
-  background: #0f141a;
+  background: var(--console-bg-input);
 }
 
 .hz-import-filemeta__name {

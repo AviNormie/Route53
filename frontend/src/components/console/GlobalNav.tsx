@@ -12,6 +12,7 @@ import {
 } from "react-icons/fi";
 import { FaAws } from "react-icons/fa";
 import { TriangleDownIcon, TriangleUpIcon } from "@/components/console/TriangleDownIcon";
+import { UserSettingsPopover } from "@/components/console/UserSettingsPopover";
 import { logout } from "@/lib/api";
 import type { MockSession } from "@/lib/mock/session";
 
@@ -208,20 +209,29 @@ function AccountMenu({
 export function GlobalNav({ session, amazonQOpen = false, onToggleAmazonQ }: GlobalNavProps) {
   const router = useRouter();
   const [menuOpen, setMenuOpen] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
   const accountRef = useRef<HTMLDivElement>(null);
+  const settingsRef = useRef<HTMLDivElement>(null);
   const username = session?.name ?? "avi";
   const workgroupLabel = session?.workgroup ?? `${ACCOUNT_NAME} (${ACCOUNT_ID})`;
 
   useEffect(() => {
-    if (!menuOpen) return;
+    if (!menuOpen && !settingsOpen) return;
 
     const onPointerDown = (event: MouseEvent) => {
-      if (!accountRef.current?.contains(event.target as Node)) {
+      const target = event.target as Node;
+      if (menuOpen && !accountRef.current?.contains(target)) {
         setMenuOpen(false);
+      }
+      if (settingsOpen && !settingsRef.current?.contains(target)) {
+        setSettingsOpen(false);
       }
     };
     const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") setMenuOpen(false);
+      if (event.key === "Escape") {
+        setMenuOpen(false);
+        setSettingsOpen(false);
+      }
     };
 
     document.addEventListener("mousedown", onPointerDown);
@@ -230,10 +240,11 @@ export function GlobalNav({ session, amazonQOpen = false, onToggleAmazonQ }: Glo
       document.removeEventListener("mousedown", onPointerDown);
       document.removeEventListener("keydown", onKeyDown);
     };
-  }, [menuOpen]);
+  }, [menuOpen, settingsOpen]);
 
   const onSignOut = async () => {
     setMenuOpen(false);
+    setSettingsOpen(false);
     try {
       await logout();
     } finally {
@@ -298,9 +309,22 @@ export function GlobalNav({ session, amazonQOpen = false, onToggleAmazonQ }: Glo
             <FiHelpCircle size={16} aria-hidden="true" />
           </button>
           <span className="console-global-nav__vsep" aria-hidden="true" />
-          <button type="button" className="console-global-nav__icon-btn" aria-label="Settings">
-            <FiSettings size={16} aria-hidden="true" />
-          </button>
+          <div className="console-settings" ref={settingsRef}>
+            <button
+              type="button"
+              className={`console-global-nav__icon-btn${settingsOpen ? " is-active" : ""}`}
+              aria-label="Settings"
+              aria-expanded={settingsOpen}
+              aria-haspopup="dialog"
+              onClick={() => {
+                setSettingsOpen((v) => !v);
+                setMenuOpen(false);
+              }}
+            >
+              <FiSettings size={16} aria-hidden="true" />
+            </button>
+            <UserSettingsPopover open={settingsOpen} />
+          </div>
           <span className="console-global-nav__vsep" aria-hidden="true" />
           <button type="button" className="console-global-nav__region" aria-label="Region">
             <span>Global</span>
@@ -314,7 +338,10 @@ export function GlobalNav({ session, amazonQOpen = false, onToggleAmazonQ }: Glo
             className={`console-account__trigger${menuOpen ? " is-open" : ""}`}
             aria-expanded={menuOpen}
             aria-haspopup="dialog"
-            onClick={() => setMenuOpen((v) => !v)}
+            onClick={() => {
+              setMenuOpen((v) => !v);
+              setSettingsOpen(false);
+            }}
           >
             <span>{workgroupLabel}</span>
             {menuOpen ? <TriangleUpIcon size={10} /> : <TriangleDownIcon size={10} />}
