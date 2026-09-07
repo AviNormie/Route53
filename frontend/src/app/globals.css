@@ -5312,3 +5312,271 @@ a.console-btn.is-disabled {
     flex-basis: auto;
   }
 }
+
+/* —— BIND import wizard —— */
+.hz-import-wizard {
+  width: min(52rem, 100%);
+  max-height: min(90vh, 860px);
+  display: flex;
+  flex-direction: column;
+  padding: 1.15rem 1.25rem 1.25rem;
+  border: 1px solid #414d5c;
+  border-radius: 12px;
+  background: #161d27;
+  overflow: hidden;
+}
+
+.hz-import-wizard__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.35rem;
+}
+
+.hz-import-wizard__header h3 {
+  margin: 0;
+  color: #fff;
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.hz-import-wizard__header button {
+  border: 0;
+  background: transparent;
+  color: #aab7b8;
+  cursor: pointer;
+}
+
+.hz-import-wizard__desc {
+  margin: 0 0 1rem;
+  color: #d1d5db;
+  font-size: 14px;
+  line-height: 1.45;
+}
+
+.hz-import-dropzone {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  min-height: 180px;
+  padding: 1.5rem;
+  border: 1px dashed #687078;
+  border-radius: 8px;
+  background: #0f141a;
+  color: #aab7b8;
+  text-align: center;
+}
+
+.hz-import-dropzone.is-dragging {
+  border-color: #42b4ff;
+  background: rgb(66 180 255 / 0.08);
+}
+
+.hz-import-dropzone p {
+  margin: 0;
+  font-size: 14px;
+}
+
+.hz-import-filemeta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-top: 0.85rem;
+  padding: 0.75rem 0.9rem;
+  border: 1px solid #414d5c;
+  border-radius: 8px;
+  background: #0f141a;
+}
+
+.hz-import-filemeta__name {
+  margin: 0;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 700;
+  word-break: break-all;
+}
+
+.hz-import-filemeta__size {
+  margin: 0.2rem 0 0;
+  color: #aab7b8;
+  font-size: 13px;
+}
+
+.hz-import-wizard__actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.65rem;
+  margin-top: 1rem;
+}
+
+.hz-import-summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem 1.25rem;
+  margin-bottom: 0.85rem;
+  color: #d5dbdb;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.hz-import-dup {
+  margin: 0 0 0.85rem;
+  padding: 0.75rem 0.9rem;
+  border: 1px solid #414d5c;
+  border-radius: 8px;
+  color: #d5dbdb;
+  font-size: 13px;
+}
+
+.hz-import-dup legend {
+  padding: 0 0.35rem;
+  color: #fff;
+  font-weight: 700;
+}
+
+.hz-import-dup label {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  margin-top: 0.45rem;
+  cursor: pointer;
+}
+
+.hz-import-preview-wrap {
+  flex: 1;
+  min-height: 0;
+  max-height: 360px;
+  overflow: auto;
+  border: 1px solid #414d5c;
+  border-radius: 8px;
+}
+
+.hz-import-preview-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.hz-import-preview-table th,
+.hz-import-preview-table td {
+  padding: 0.45rem 0.65rem;
+  border-bottom: 1px solid #414d5c;
+  text-align: left;
+  vertical-align: top;
+  color: #fff;
+}
+
+.hz-import-preview-table th {
+  position: sticky;
+  top: 0;
+  background: #1b2430;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.hz-import-preview-table__value {
+  max-width: 280px;
+  word-break: break-word;
+}
+
+.hz-import-preview-table__reason {
+  display: block;
+  margin-top: 0.2rem;
+  color: #eb6f6f;
+  font-size: 12px;
+}
+
+.hz-import-status {
+  display: inline-flex;
+  padding: 0.1rem 0.45rem;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.hz-import-status--valid {
+  background: rgb(29 129 2 / 0.25);
+  color: #7dce6a;
+}
+
+.hz-import-status--invalid {
+  background: rgb(235 111 111 / 0.2);
+  color: #eb6f6f;
+}
+
+.hz-import-status--unsupported {
+  background: rgb(255 180 0 / 0.18);
+  color: #ffb400;
+}
+
+.hz-import-status--duplicate {
+  background: rgb(66 180 255 / 0.18);
+  color: #42b4ff;
+}
+
+.hz-import-result__title {
+  margin: 0 0 0.65rem;
+  color: #fff;
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.hz-import-result ul {
+  margin: 0 0 1rem;
+  padding-left: 1.2rem;
+  color: #d5dbdb;
+  font-size: 14px;
+}
+
+/* —— Export menu —— */
+.hz-export-menu {
+  position: relative;
+  display: inline-flex;
+}
+
+.hz-export-menu__trigger {
+  gap: 0.35rem;
+}
+
+.hz-export-menu__list {
+  position: absolute;
+  top: calc(100% + 4px);
+  right: 0;
+  z-index: 40;
+  min-width: 180px;
+  margin: 0;
+  padding: 0.35rem 0;
+  list-style: none;
+  border: 1px solid #414d5c;
+  border-radius: 8px;
+  background: #161d27;
+  box-shadow: 0 10px 24px rgb(0 0 0 / 0.4);
+}
+
+.hz-export-menu__list button {
+  display: block;
+  width: 100%;
+  padding: 0.5rem 0.85rem;
+  border: 0;
+  background: transparent;
+  color: #d5dbdb;
+  text-align: left;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.hz-export-menu__list button:hover {
+  background: rgb(66 180 255 / 0.12);
+  color: #fff;
+}
+
+.console-hz-toolbar__actions .hz-export-menu__trigger.console-btn--normal {
+  min-height: 32px;
+}

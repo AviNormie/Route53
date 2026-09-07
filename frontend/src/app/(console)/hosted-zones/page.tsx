@@ -1,12 +1,13 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { FiCheckCircle, FiRefreshCw, FiSettings, FiX } from "react-icons/fi";
 import { HiChevronLeft, HiChevronRight } from "react-icons/hi";
 import { ConsoleLayout } from "@/components/console/ConsoleLayout";
 import { ConsoleSearch } from "@/components/console/ConsoleInput";
 import { ConsoleSkeleton } from "@/components/console/ConsoleSkeleton";
+import { ExportMenu } from "@/components/console/ExportMenu";
 import { TriangleDownIcon } from "@/components/console/TriangleDownIcon";
 import {
   ApiError,
@@ -29,7 +30,7 @@ export default function HostedZonesPage() {
   const [zones, setZones] = useState<HostedZone[]>([]);
   const [total, setTotal] = useState(0);
   const [query, setQuery] = useState("");
-  const [selected, setSelected] = useState<string | null>(null);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
@@ -54,7 +55,10 @@ export default function HostedZonesPage() {
       });
       setZones(data.items);
       setTotal(data.total);
-      setSelected((cur) => (cur && data.items.some((z) => z.id === cur) ? cur : null));
+      setSelectedIds((cur) => {
+        const next = new Set([...cur].filter((id) => data.items.some((z) => z.id === id)));
+        return next;
+      });
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Failed to load hosted zones.");
       setZones([]);
@@ -75,17 +79,42 @@ export default function HostedZonesPage() {
     return () => window.clearTimeout(handle);
   }, [query, load]);
 
-  const hasSelection = Boolean(selected && zones.some((z) => z.id === selected));
+  const selectedList = useMemo(() => Array.from(selectedIds), [selectedIds]);
+  const hasSelection = selectedList.length > 0;
+  const singleSelected = selectedList.length === 1 ? selectedList[0] : null;
+
+  const toggleZone = (zoneId: string) => {
+    setSelectedIds((current) => {
+      const next = new Set(current);
+      if (next.has(zoneId)) next.delete(zoneId);
+      else next.add(zoneId);
+      return next;
+    });
+  };
+
+  const toggleAll = () => {
+    if (selectedIds.size === zones.length) {
+      setSelectedIds(new Set());
+      return;
+    }
+    setSelectedIds(new Set(zones.map((zone) => zone.id)));
+  };
 
   const onDelete = async () => {
-    if (!selected) return;
-    const zone = zones.find((z) => z.id === selected);
-    if (!zone) return;
-    if (!window.confirm(`Delete hosted zone ${displayDomain(zone.name)}?`)) return;
+    if (selectedList.length === 0) return;
+    const names = zones
+      .filter((z) => selectedIds.has(z.id))
+      .map((z) => displayDomain(z.name))
+      .join(", ");
+    if (!window.confirm(`Delete hosted zone${selectedList.length > 1 ? "s" : ""} ${names}?`)) {
+      return;
+    }
     setBusy(true);
     try {
-      await deleteHostedZone(selected);
-      setSelected(null);
+      for (const id of selectedList) {
+        await deleteHostedZone(id);
+      }
+      setSelectedIds(new Set());
       await load(query);
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Failed to delete hosted zone.");
@@ -136,11 +165,11 @@ export default function HostedZonesPage() {
               <FiRefreshCw size={15} />
             </button>
             <Link
-              href={hasSelection ? `/hosted-zones/${selected}` : "#"}
-              className={`console-btn console-btn--ghost${hasSelection ? "" : " is-disabled"}`}
-              aria-disabled={!hasSelection}
+              href={singleSelected ? `/hosted-zones/${singleSelected}` : "#"}
+              className={`console-btn console-btn--ghost${singleSelected ? "" : " is-disabled"}`}
+              aria-disabled={!singleSelected}
               onClick={(e) => {
-                if (!hasSelection) e.preventDefault();
+                if (!singleSelected) e.preventDefault();
               }}
             >
               View details
@@ -148,6 +177,12 @@ export default function HostedZonesPage() {
             <button type="button" className="console-btn console-btn--ghost" disabled>
               Edit
             </button>
+            <ExportMenu
+              zoneIds={selectedList}
+              disabled={!hasSelection || busy}
+              buttonVariant="ghost"
+              onError={setError}
+            />
             <button
               type="button"
               className="console-btn console-btn--ghost"
@@ -190,7 +225,20 @@ export default function HostedZonesPage() {
           <table className="console-table console-table--clickable console-hz-table">
             <thead>
               <tr>
-                <th className="console-hz-table__select" aria-label="Select" />
+                <th className="console-hz-table__select">
+                  <input
+                    type="checkbox"
+                    checked={zones.length > 0 && selectedIds.size === zones.length}
+                    ref={(el) => {
+                      if (el) {
+                        el.indeterminate =
+                          selectedIds.size > 0 && selectedIds.size < zones.length;
+                      }
+                    }}
+                    onChange={toggleAll}
+                    aria-label="Select all hosted zones"
+                  />
+                </th>
                 <th>
                   <SortLabel>Hosted zone name</SortLabel>
                 </th>
@@ -227,41 +275,43 @@ export default function HostedZonesPage() {
                   </td>
                 </tr>
               ) : (
-                zones.map((zone) => (
-                  <tr
-                    key={zone.id}
-                    className={selected === zone.id ? "is-selected" : undefined}
-                    onClick={() => setSelected(zone.id)}
-                    onDoubleClick={() => {
-                      window.location.href = `/hosted-zones/${zone.id}`;
-                    }}
-                  >
-                    <td
-                      className="console-hz-table__select"
-                      onClick={(e) => e.stopPropagation()}
+                zones.map((zone) => {
+                  const selected = selectedIds.has(zone.id);
+                  return (
+                    <tr
+                      key={zone.id}
+                      className={selected ? "is-selected" : undefined}
+                      onClick={() => toggleZone(zone.id)}
+                      onDoubleClick={() => {
+                        window.location.href = `/hosted-zones/${zone.id}`;
+                      }}
                     >
-                      <input
-                        type="radio"
-                        name="hosted-zone-selection"
-                        checked={selected === zone.id}
-                        onChange={() => setSelected(zone.id)}
-                        aria-label={`Select ${displayDomain(zone.name)}`}
-                      />
-                    </td>
-                    <td>
-                      <Link href={`/hosted-zones/${zone.id}`} className="console-link">
-                        {displayDomain(zone.name)}
-                      </Link>
-                    </td>
-                    <td>{zone.type}</td>
-                    <td>Route 53</td>
-                    <td>{zone.record_count}</td>
-                    <td>{zone.comment || "—"}</td>
-                    <td>
-                      <code className="console-hz-table__id">{zone.id}</code>
-                    </td>
-                  </tr>
-                ))
+                      <td
+                        className="console-hz-table__select"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={selected}
+                          onChange={() => toggleZone(zone.id)}
+                          aria-label={`Select ${displayDomain(zone.name)}`}
+                        />
+                      </td>
+                      <td>
+                        <Link href={`/hosted-zones/${zone.id}`} className="console-link">
+                          {displayDomain(zone.name)}
+                        </Link>
+                      </td>
+                      <td>{zone.type}</td>
+                      <td>Route 53</td>
+                      <td>{zone.record_count}</td>
+                      <td>{zone.comment || "—"}</td>
+                      <td>
+                        <code className="console-hz-table__id">{zone.id}</code>
+                      </td>
+                    </tr>
+                  );
+                })
               )}
             </tbody>
           </table>

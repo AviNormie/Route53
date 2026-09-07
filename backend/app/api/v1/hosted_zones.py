@@ -1,6 +1,6 @@
 from typing import Literal
 
-from fastapi import APIRouter, Query, Response, status
+from fastapi import APIRouter, HTTPException, Query, Response, status
 
 from app.api.deps import CurrentUser, DbDep
 from app.schemas.hosted_zone import (
@@ -9,7 +9,8 @@ from app.schemas.hosted_zone import (
     HostedZoneOut,
     HostedZoneUpdate,
 )
-from app.services import hosted_zone_service
+from app.schemas.zone_export import HostedZoneBulkExportIn
+from app.services import hosted_zone_service, zone_export_service
 
 router = APIRouter(prefix="/hosted-zones", tags=["hosted-zones"])
 
@@ -51,6 +52,52 @@ def create_hosted_zone(
 ) -> HostedZoneOut:
     zone = hosted_zone_service.create(db, current_user, payload)
     return HostedZoneOut.model_validate(zone)
+
+
+@router.post("/export")
+def export_hosted_zones_bulk(
+    payload: HostedZoneBulkExportIn,
+    db: DbDep,
+    current_user: CurrentUser,
+) -> Response:
+    """Export one or more hosted zones (JSON array / multi BIND zip)."""
+    try:
+        filename, media_type, body = zone_export_service.build_bulk_export(
+            db,
+            current_user,
+            payload.zone_ids,
+            payload.format,
+        )
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)
+        ) from exc
+    return Response(
+        content=body,
+        media_type=media_type,
+        headers={
+            "Content-Disposition": f'attachment; filename="{filename}"',
+        },
+    )
+
+
+@router.get("/{zone_id}/export")
+def export_hosted_zone(
+    zone_id: str,
+    db: DbDep,
+    current_user: CurrentUser,
+    format: Literal["json", "bind"] = Query(default="json"),
+) -> Response:
+    filename, media_type, body = zone_export_service.build_zone_export(
+        db, current_user, zone_id, format
+    )
+    return Response(
+        content=body.encode("utf-8"),
+        media_type=media_type,
+        headers={
+            "Content-Disposition": f'attachment; filename="{filename}"',
+        },
+    )
 
 
 @router.get("/{zone_id}", response_model=HostedZoneOut)

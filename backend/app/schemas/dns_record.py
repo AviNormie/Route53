@@ -17,7 +17,9 @@ from typing import Annotated, Literal
 from pydantic import BaseModel, ConfigDict, Field
 
 CaaTag = Literal["issue", "issuewild", "iodef"]
-DnsRecordType = Literal["A", "AAAA", "CNAME", "TXT", "MX", "NS", "PTR", "SRV", "CAA"]
+DnsRecordType = Literal[
+    "A", "AAAA", "CNAME", "TXT", "MX", "NS", "PTR", "SRV", "CAA", "SOA"
+]
 
 
 class _StrictBase(BaseModel):
@@ -54,6 +56,10 @@ class PtrRecordCreate(_SimpleRecordBase):
     type: Literal["PTR"]
 
 
+class SoaRecordCreate(_SimpleRecordBase):
+    type: Literal["SOA"]
+
+
 class MxRecordCreate(_SimpleRecordBase):
     type: Literal["MX"]
     priority: int = Field(ge=0, le=65535)
@@ -79,6 +85,7 @@ DnsRecordCreate = Annotated[
     | TxtRecordCreate
     | NsRecordCreate
     | PtrRecordCreate
+    | SoaRecordCreate
     | MxRecordCreate
     | SrvRecordCreate
     | CaaRecordCreate,

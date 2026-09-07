@@ -20,7 +20,7 @@ from app.models.ids import generate_dns_record_id
 if TYPE_CHECKING:
     from app.models.hosted_zone import HostedZone
 
-_DNS_TYPES = ("A", "AAAA", "CNAME", "TXT", "MX", "NS", "PTR", "SRV", "CAA")
+_DNS_TYPES = ("A", "AAAA", "CNAME", "TXT", "MX", "NS", "PTR", "SRV", "CAA", "SOA")
 _CAA_TAGS = ("issue", "issuewild", "iodef")
 
 
@@ -28,7 +28,7 @@ class DnsRecord(Base):
     __tablename__ = "dns_records"
     __table_args__ = (
         CheckConstraint(
-            "type IN ('A', 'AAAA', 'CNAME', 'TXT', 'MX', 'NS', 'PTR', 'SRV', 'CAA')",
+            "type IN ('A', 'AAAA', 'CNAME', 'TXT', 'MX', 'NS', 'PTR', 'SRV', 'CAA', 'SOA')",
             name="ck_dns_records_type",
         ),
         CheckConstraint(

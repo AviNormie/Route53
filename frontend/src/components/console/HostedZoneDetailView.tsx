@@ -23,6 +23,7 @@ import {
 import { ConsoleButton } from "@/components/console/ConsoleButton";
 import { ConsoleLayout } from "@/components/console/ConsoleLayout";
 import { ConsoleSkeleton } from "@/components/console/ConsoleSkeleton";
+import { ExportMenu } from "@/components/console/ExportMenu";
 import { ImportRecordsPanel } from "@/components/console/ImportRecordsPanel";
 import { InfoLink } from "@/components/console/InfoLink";
 import { PropertyFilterDropdown } from "@/components/console/PropertyFilterDropdown";
@@ -53,6 +54,7 @@ const RECORD_TYPE_OPTIONS = [
   "SRV",
   "CAA",
   "NS",
+  "SOA",
 ].map((type) => ({ value: type, label: type }));
 
 const ROUTING_OPTIONS = [
@@ -404,6 +406,11 @@ export function HostedZoneDetailView({ zoneId }: { zoneId: string }) {
                 </div>
               </div>
               <div className="hz-detail-header__actions">
+                <ExportMenu
+                  zoneId={zoneId}
+                  disabled={busy}
+                  onError={(message) => setError(message)}
+                />
                 <ConsoleButton variant="normal" disabled={busy} onClick={() => void onDeleteZone()}>
                   Delete zone
                 </ConsoleButton>

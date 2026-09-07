@@ -37,7 +37,8 @@ export type DnsRecordType =
   | "NS"
   | "PTR"
   | "SRV"
-  | "CAA";
+  | "CAA"
+  | "SOA";
 
 export type DnsRecord = {
   id: string;
@@ -271,4 +272,160 @@ export async function deleteDnsRecord(recordId: string): Promise<void> {
   await apiFetch<void>(`/api/v1/records/${encodeURIComponent(recordId)}`, {
     method: "DELETE",
   });
+}
+
+export type BindImportRecordStatus =
+  | "valid"
+  | "invalid"
+  | "unsupported"
+  | "duplicate";
+
+export type BindImportPreviewRecord = {
+  index: number;
+  name: string;
+  type: string;
+  value: string;
+  ttl: number;
+  priority: number | null;
+  weight: number | null;
+  port: number | null;
+  caa_flag: number | null;
+  caa_tag: string | null;
+  status: BindImportRecordStatus;
+  reason: string | null;
+  existing_record_id: string | null;
+  line: number | null;
+};
+
+export type BindImportPreview = {
+  origin: string | null;
+  filename: string | null;
+  records: BindImportPreviewRecord[];
+  summary: {
+    total: number;
+    valid: number;
+    invalid: number;
+    unsupported: number;
+    duplicate: number;
+  };
+  warnings: string[];
+};
+
+export type BindImportDuplicateMode = "skip" | "replace";
+
+export type BindImportResult = {
+  imported: number;
+  skipped: number;
+  failed: number;
+  failures: Array<{
+    name: string;
+    type: string;
+    value: string;
+    reason: string;
+  }>;
+};
+
+export async function previewBindImport(
+  zoneId: string,
+  input: { content: string; filename?: string },
+): Promise<BindImportPreview> {
+  return apiFetch<BindImportPreview>(
+    `/api/v1/hosted-zones/${encodeURIComponent(zoneId)}/records/import/preview-json`,
+    {
+      method: "POST",
+      body: JSON.stringify({
+        content: input.content,
+        filename: input.filename ?? null,
+      }),
+    },
+  );
+}
+
+export async function previewBindImportFile(
+  zoneId: string,
+  file: File,
+): Promise<BindImportPreview> {
+  const form = new FormData();
+  form.append("file", file, file.name);
+  const response = await fetch(
+    `${getApiUrl()}/api/v1/hosted-zones/${encodeURIComponent(zoneId)}/records/import/preview`,
+    {
+      method: "POST",
+      credentials: "include",
+      body: form,
+    },
+  );
+  if (!response.ok) {
+    throw new ApiError(await parseError(response), response.status);
+  }
+  return response.json() as Promise<BindImportPreview>;
+}
+
+export async function commitBindImport(
+  zoneId: string,
+  input: {
+    content: string;
+    filename?: string;
+    duplicate_mode?: BindImportDuplicateMode;
+  },
+): Promise<BindImportResult> {
+  return apiFetch<BindImportResult>(
+    `/api/v1/hosted-zones/${encodeURIComponent(zoneId)}/records/import`,
+    {
+      method: "POST",
+      body: JSON.stringify({
+        content: input.content,
+        filename: input.filename ?? null,
+        duplicate_mode: input.duplicate_mode ?? "skip",
+      }),
+    },
+  );
+}
+
+export type ZoneExportFormat = "json" | "bind";
+
+async function downloadFromResponse(
+  response: Response,
+  fallbackFilename: string,
+): Promise<void> {
+  if (!response.ok) {
+    throw new ApiError(await parseError(response), response.status);
+  }
+  const { filenameFromContentDisposition, downloadBlob } = await import("@/lib/download");
+  const filename = filenameFromContentDisposition(
+    response.headers.get("content-disposition"),
+    fallbackFilename,
+  );
+  const blob = await response.blob();
+  downloadBlob(filename, blob);
+}
+
+export async function exportHostedZone(
+  zoneId: string,
+  format: ZoneExportFormat,
+): Promise<void> {
+  const response = await fetch(
+    `${getApiUrl()}/api/v1/hosted-zones/${encodeURIComponent(zoneId)}/export?format=${format}`,
+    { method: "GET", credentials: "include" },
+  );
+  await downloadFromResponse(
+    response,
+    format === "json" ? "hosted-zone.json" : "hosted-zone.zone",
+  );
+}
+
+export async function exportHostedZones(
+  zoneIds: string[],
+  format: ZoneExportFormat,
+): Promise<void> {
+  const response = await fetch(`${getApiUrl()}/api/v1/hosted-zones/export`, {
+    method: "POST",
+    credentials: "include",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ zone_ids: zoneIds, format }),
+  });
+  await downloadFromResponse(
+    response,
+    format === "json" ? "hosted-zones-export.json" : "hosted-zones-export.zip",
+  );
 }
