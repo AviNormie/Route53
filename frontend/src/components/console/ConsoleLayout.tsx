@@ -107,11 +107,11 @@ export function ConsoleLayout({
                 ) : null}
                 {children}
               </main>
-              <ConsoleFooter />
             </div>
           </div>
         </div>
       </div>
+      <ConsoleFooter />
       <Link href="/" className="sr-only">
         Back to marketing site
       </Link>

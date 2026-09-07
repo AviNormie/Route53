@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { FormEvent, useState } from "react";
+import { FormEvent, useEffect, useState } from "react";
 import { FaAws } from "react-icons/fa";
 import {
   AmazonIcon,
@@ -10,7 +10,7 @@ import {
   GitHubIcon,
   GoogleColorIcon,
 } from "@/components/ui/social-icons";
-import { ApiError, login, signup } from "@/lib/api";
+import { ApiError, getCurrentUser, login, signup } from "@/lib/api";
 
 const socialProviders = [
   { id: "google", label: "Continue with Google", Icon: GoogleColorIcon },
@@ -29,6 +29,21 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    void (async () => {
+      try {
+        const user = await getCurrentUser();
+        if (!cancelled && user) router.replace("/dashboard");
+      } catch {
+        // stay on login
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [router]);
 
   const isSignup = mode === "signup";
   const passwordVisible = isSignup || showPassword;

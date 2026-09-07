@@ -1,9 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { FaAws } from "react-icons/fa";
 import { CloseIcon, MenuIcon, SearchIcon } from "@/components/ui/icons";
+import { getCurrentUser } from "@/lib/api";
 
 const leftLinks = [
   "Discover AWS",
@@ -15,14 +16,30 @@ const leftLinks = [
 
 export function AwsNavbar() {
   const [open, setOpen] = useState(false);
+  const [consoleHref, setConsoleHref] = useState("/login");
+
+  useEffect(() => {
+    let cancelled = false;
+    void (async () => {
+      try {
+        const user = await getCurrentUser();
+        if (!cancelled) setConsoleHref(user ? "/dashboard" : "/login");
+      } catch {
+        if (!cancelled) setConsoleHref("/login");
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   return (
     <header className="border-b border-aws-border bg-white">
-      <div className="page-shell flex min-h-[64px] items-center justify-between gap-4 py-2">
-        <div className="flex min-w-0 items-center gap-3 lg:gap-5">
+      <div className="page-shell page-shell--nav flex min-h-[64px] items-center justify-between gap-4 py-2">
+        <div className="flex min-w-0 items-center gap-3 lg:gap-4">
           <Link
             href="/"
-            className="shrink-0 text-[2.25rem] leading-none text-aws-ink"
+            className="shrink-0 text-[1.85rem] leading-none text-aws-ink"
             aria-label="Amazon Web Services home"
           >
             <FaAws aria-hidden="true" />
@@ -34,7 +51,7 @@ export function AwsNavbar() {
 
           <span className="hidden h-5 w-px bg-aws-border xl:block" aria-hidden="true" />
 
-          <nav className="hidden items-center gap-4 xl:flex" aria-label="AWS primary">
+          <nav className="hidden items-center gap-3 xl:flex" aria-label="AWS primary">
             {leftLinks.map((label) => (
               <a
                 key={label}
@@ -47,7 +64,7 @@ export function AwsNavbar() {
           </nav>
         </div>
 
-        <div className="flex items-center gap-3 sm:gap-4">
+        <div className="flex items-center gap-2.5 sm:gap-3">
           <button
             type="button"
             className="inline-flex items-center gap-2 text-sm font-medium text-aws-ink hover:underline"
@@ -58,16 +75,16 @@ export function AwsNavbar() {
           </button>
 
           <Link
-            href="/dashboard"
+            href={consoleHref}
             className="hidden text-sm font-medium text-aws-ink hover:underline md:inline"
           >
             Sign in to console
           </Link>
 
-          <span className="gradient-glow gradient-glow--circle hidden rounded-full sm:inline-flex">
+          <span className="gradient-glow gradient-glow--pill hidden sm:inline-flex">
             <Link
               href="/login"
-              className="btn-pill btn-pill-primary h-12 w-[175px] px-0 text-sm"
+              className="btn-pill btn-pill-primary btn-pill--nav-cta"
             >
               Create account
             </Link>
@@ -75,7 +92,7 @@ export function AwsNavbar() {
 
           <button
             type="button"
-            className="grid size-10 place-items-center rounded-md border border-aws-border xl:hidden"
+            className="grid size-9 place-items-center rounded-md border border-aws-border xl:hidden"
             aria-expanded={open}
             aria-controls="mobile-aws-nav"
             aria-label={open ? "Close menu" : "Open menu"}
@@ -88,7 +105,7 @@ export function AwsNavbar() {
 
       {open ? (
         <div id="mobile-aws-nav" className="border-t border-aws-border bg-white xl:hidden">
-          <nav className="page-shell flex flex-col gap-1 py-3" aria-label="AWS mobile">
+          <nav className="page-shell page-shell--nav flex flex-col gap-1 py-3" aria-label="AWS mobile">
             <a href="#" className="rounded-md px-2 py-2 text-sm font-medium hover:bg-aws-muted-bg">
               re:Invent
             </a>
@@ -101,11 +118,14 @@ export function AwsNavbar() {
                 {label}
               </a>
             ))}
-            <Link href="/dashboard" className="rounded-md px-2 py-2 text-sm font-medium hover:bg-aws-muted-bg">
+            <Link
+              href={consoleHref}
+              className="rounded-md px-2 py-2 text-sm font-medium hover:bg-aws-muted-bg"
+            >
               Sign in to console
             </Link>
-            <span className="gradient-glow gradient-glow--block mt-2 sm:hidden">
-              <Link href="/login" className="btn-pill btn-pill-primary w-full">
+            <span className="gradient-glow gradient-glow--pill gradient-glow--block mt-2 sm:hidden">
+              <Link href="/login" className="btn-pill btn-pill-primary btn-pill--nav-cta w-full">
                 Create account
               </Link>
             </span>

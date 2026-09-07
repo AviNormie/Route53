@@ -39,7 +39,7 @@ export function AwsTopBar() {
 
   return (
     <div className="relative z-[60] overflow-visible bg-aws-topbar text-white">
-      <div className="page-shell flex h-[58px] items-center justify-end gap-4 overflow-visible text-[13px] sm:gap-5">
+      <div className="page-shell page-shell--nav flex h-[58px] items-center justify-end gap-4 overflow-visible text-[13px] sm:gap-5">
         <button
           type="button"
           className="inline-flex items-center gap-1.5 rounded-sm hover:underline"
@@ -81,14 +81,14 @@ export function AwsTopBar() {
           >
             <button
               type="button"
-              className="grid size-8 place-items-center rounded-full border border-white/50 bg-aws-topbar"
+              className="grid size-7 place-items-center rounded-full border-[1.5px] border-white bg-aws-topbar text-white"
               aria-label="AWS Profile"
               aria-haspopup="dialog"
               aria-expanded={profileOpen}
               aria-controls={menuId}
               onClick={() => setProfileOpen((value) => !value)}
             >
-              <UserIcon />
+              <UserIcon size={16} className="profile-avatar-icon" />
             </button>
           </span>
 

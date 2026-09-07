@@ -1,3 +1,5 @@
+"use client";
+
 import Image from "next/image";
 import { ArrowRightIcon } from "@/components/ui/icons";
 
@@ -24,43 +26,47 @@ const customers = [
 
 export function Customers() {
   return (
-    <section className="page-shell py-[var(--section-space)]" aria-labelledby="customers-heading">
-      <h2 id="customers-heading" className="section-heading mb-8">
-        Customers
-      </h2>
+    <section className="customers-section" aria-labelledby="customers-heading">
+      <div className="page-shell">
+        <h2 id="customers-heading" className="section-heading mb-8">
+          Customers
+        </h2>
+      </div>
 
-      <div className="grid gap-8">
-        {customers.map((customer) => (
-          <a
+      <div className="customer-stack" style={{ ["--stack-count" as string]: customers.length }}>
+        {customers.map((customer, index) => (
+          <div
             key={customer.id}
-            href={customer.href}
-            className="customer-glow group relative block overflow-hidden rounded-[1.5rem] focus-visible:outline-offset-4"
+            className="customer-stack__slot"
+            style={{ zIndex: index + 1 }}
           >
-            <div className="relative aspect-[16/8] min-h-[16rem] w-full sm:aspect-[21/9]">
-              <Image
-                src={customer.image}
-                alt={customer.imageAlt}
-                fill
-                unoptimized
-                className="object-cover transition-transform duration-500 group-hover:scale-[1.02]"
-                sizes="(max-width: 1600px) 100vw, 1600px"
-                priority={customer.id === "capital-one"}
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/25 to-transparent" />
-              <div className="absolute inset-x-0 bottom-0 p-6 sm:p-8 md:p-10">
-                <p className="mb-3 text-sm font-semibold tracking-wide text-white/80">
-                  {customer.brand}
-                </p>
-                <h3 className="m-0 max-w-[34rem] text-[clamp(1.25rem,2.4vw,2rem)] font-bold leading-snug text-white">
-                  {customer.title}
-                </h3>
-                <span className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-white">
-                  {customer.cta}
-                  <ArrowRightIcon />
-                </span>
+            <a
+              href={customer.href}
+              className="customer-stack__card customer-glow group focus-visible:outline-offset-4"
+              aria-label={`${customer.brand}: ${customer.title}`}
+            >
+              <div className="customer-stack__media">
+                <Image
+                  src={customer.image}
+                  alt={customer.imageAlt}
+                  fill
+                  unoptimized
+                  className="object-cover transition-transform duration-500 group-hover:scale-[1.02]"
+                  sizes="(max-width: 1600px) 100vw, 1600px"
+                  priority={index === 0}
+                />
+                <div className="customer-stack__shade" aria-hidden="true" />
+                <div className="customer-stack__content">
+                  <p className="customer-stack__brand">{customer.brand}</p>
+                  <h3 className="customer-stack__title">{customer.title}</h3>
+                  <span className="customer-stack__cta">
+                    {customer.cta}
+                    <ArrowRightIcon />
+                  </span>
+                </div>
               </div>
-            </div>
-          </a>
+            </a>
+          </div>
         ))}
       </div>
     </section>

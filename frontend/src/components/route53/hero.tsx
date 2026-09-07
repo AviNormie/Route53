@@ -15,7 +15,7 @@ export function Hero() {
   return (
     <section id="overview" className="relative overflow-hidden">
       <div className="page-shell">
-        <nav aria-label="Breadcrumb" className="mb-8 text-sm">
+        <nav aria-label="Breadcrumb" className="mb-8 text-sm text-aws-body">
           <ol className="m-0 flex list-none flex-wrap items-center gap-2 p-0">
             {breadcrumbs.map((item, index) => (
               <li key={item.label} className="inline-flex items-center gap-2">
@@ -23,11 +23,14 @@ export function Hero() {
                   <ChevronRightIcon className="text-aws-body" />
                 ) : null}
                 {item.href ? (
-                  <a href={item.href} className="underline underline-offset-2 hover:text-aws-link">
+                  <a
+                    href={item.href}
+                    className="text-aws-link underline underline-offset-2 hover:text-aws-link-hover"
+                  >
                     {item.label}
                   </a>
                 ) : (
-                  <span>{item.label}</span>
+                  <span className="text-aws-ink">{item.label}</span>
                 )}
               </li>
             ))}

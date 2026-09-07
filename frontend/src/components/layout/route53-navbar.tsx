@@ -77,7 +77,7 @@ export function Route53Navbar() {
               Amazon Route 53
             </Link>
 
-            <div className="hidden items-stretch gap-1 md:flex lg:gap-2">
+            <div className="product-nav__links">
               <a
                 href="#overview"
                 className="relative inline-flex items-center px-3 py-3 text-sm font-semibold text-aws-ink after:absolute after:inset-x-2 after:bottom-0 after:h-[3px] after:rounded-full after:bg-aws-ink"
@@ -101,7 +101,7 @@ export function Route53Navbar() {
                 {featuresOpen ? (
                   <div
                     role="menu"
-                    className="absolute right-0 top-full z-20 mt-1 min-w-[12rem] rounded-lg border border-aws-border bg-white py-2 shadow-lg"
+                    className="absolute left-0 top-full z-20 mt-1 min-w-[12rem] rounded-lg border border-aws-border bg-white py-2 shadow-lg"
                   >
                     {featureLinks.map((label) => (
                       <a
@@ -129,7 +129,7 @@ export function Route53Navbar() {
               ))}
             </div>
 
-            <div className="flex items-center gap-2 md:hidden">
+            <div className="product-nav__mobile">
               <a href="#overview" className="text-sm font-semibold text-aws-ink">
                 Overview
               </a>

@@ -31,12 +31,14 @@ export function Accordion({ items, className = "" }: AccordionProps) {
               <button
                 id={buttonId}
                 type="button"
-                className="accordion-title flex w-full items-start justify-between gap-6 py-5 text-left text-aws-ink transition-colors hover:text-aws-navy"
+                className="accordion-title flex w-full items-start justify-between gap-6 py-5 text-left text-[18px] font-semibold text-aws-ink transition-colors hover:text-aws-navy"
                 aria-expanded={isOpen}
                 aria-controls={panelId}
                 onClick={() => setOpenId(isOpen ? null : item.id)}
               >
-                <span>{item.title}</span>
+                <span className="accordion-title__text text-[18px] font-semibold leading-[1.4]">
+                  {item.title}
+                </span>
                 <span className="mt-0.5 shrink-0 text-aws-ink" aria-hidden="true">
                   {isOpen ? <MinusIcon /> : <PlusIcon />}
                 </span>

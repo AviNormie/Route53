@@ -1,16 +1,27 @@
 import type { SVGProps } from "react";
-import { BsTriangleFill } from "react-icons/bs";
 
 type IconProps = SVGProps<SVGSVGElement> & { size?: number | string };
 
-export function ChevronDownIcon({ size = 12, style, className }: IconProps) {
+export function ChevronDownIcon({ size = 12, className, ...props }: IconProps) {
+  const dim = typeof size === "number" ? size : Number.parseInt(String(size), 10) || 12;
   return (
-    <BsTriangleFill
-      size={size}
+    <svg
+      viewBox="0 0 16 16"
+      width={dim}
+      height={dim}
+      fill="none"
       aria-hidden="true"
       className={className}
-      style={{ transform: "rotate(300deg)", display: "inline-block", ...style }}
-    />
+      {...props}
+    >
+      <path
+        d="M4.2 6.2 8 10l3.8-3.8"
+        stroke="currentColor"
+        strokeWidth="1.6"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
   );
 }
 
@@ -47,15 +58,24 @@ export function SearchIcon(props: IconProps) {
   );
 }
 
-export function UserIcon(props: IconProps) {
+export function UserIcon({ size = 20, className, ...props }: IconProps) {
+  const dim = typeof size === "number" ? size : Number.parseInt(String(size), 10) || 20;
   return (
-    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" aria-hidden="true" {...props}>
-      <circle cx="12" cy="12" r="9.25" stroke="currentColor" strokeWidth="1.5" />
-      <circle cx="12" cy="10" r="3" stroke="currentColor" strokeWidth="1.5" />
+    <svg
+      viewBox="0 0 24 24"
+      width={dim}
+      height={dim}
+      fill="none"
+      aria-hidden="true"
+      className={className}
+      {...props}
+    >
+      {/* Head + shoulders only — circle frame comes from the button border */}
+      <circle cx="12" cy="9" r="3.1" stroke="currentColor" strokeWidth="1.6" />
       <path
-        d="M6.8 18.2c1.3-2 3.1-3 5.2-3s3.9 1 5.2 3"
+        d="M6.4 18.2c1.35-2.15 3.35-3.25 5.6-3.25s4.25 1.1 5.6 3.25"
         stroke="currentColor"
-        strokeWidth="1.5"
+        strokeWidth="1.6"
         strokeLinecap="round"
       />
     </svg>
