@@ -58,19 +58,19 @@ export function AwsNavbar() {
           </button>
 
           <Link
-            href="/login"
+            href="/signin"
             className="hidden text-sm font-medium text-aws-ink hover:underline md:inline"
           >
             Sign in to console
           </Link>
 
           <span className="gradient-glow gradient-glow--circle hidden rounded-full sm:inline-flex">
-            <a
-              href="#"
+            <Link
+              href="/signup"
               className="btn-pill btn-pill-primary h-12 w-[175px] px-0 text-sm"
             >
               Create account
-            </a>
+            </Link>
           </span>
 
           <button
@@ -101,13 +101,13 @@ export function AwsNavbar() {
                 {label}
               </a>
             ))}
-            <Link href="/login" className="rounded-md px-2 py-2 text-sm font-medium hover:bg-aws-muted-bg">
+            <Link href="/signin" className="rounded-md px-2 py-2 text-sm font-medium hover:bg-aws-muted-bg">
               Sign in to console
             </Link>
             <span className="gradient-glow gradient-glow--block mt-2 sm:hidden">
-              <a href="#" className="btn-pill btn-pill-primary w-full">
+              <Link href="/signup" className="btn-pill btn-pill-primary w-full">
                 Create account
-              </a>
+              </Link>
             </span>
           </nav>
         </div>
