@@ -71,7 +71,6 @@ class HostedZone(Base):
     records: Mapped[list[DnsRecord]] = relationship(
         back_populates="hosted_zone",
         cascade="all, delete-orphan",
-        passive_deletes=True,
     )
 
     def __repr__(self) -> str:

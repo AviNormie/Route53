@@ -1,64 +1,12 @@
-from collections.abc import Generator
 from datetime import UTC, datetime, timedelta
 
-import pytest
 from fastapi.testclient import TestClient
-from sqlalchemy import create_engine
-from sqlalchemy.orm import Session, sessionmaker
-from sqlalchemy.pool import StaticPool
+from sqlalchemy.orm import Session
 
 from app.core.config import get_settings
-from app.core.security import SESSION_COOKIE_NAME, hash_password
-from app.db.base import Base
-from app.db.session import get_db
-from app.main import app
+from app.core.security import SESSION_COOKIE_NAME
 from app.models.session import Session as AuthSession
 from app.models.user import User
-
-
-@pytest.fixture()
-def db_session() -> Generator[Session, None, None]:
-    engine = create_engine(
-        "sqlite://",
-        connect_args={"check_same_thread": False},
-        poolclass=StaticPool,
-    )
-    Base.metadata.create_all(bind=engine)
-    testing_session_local = sessionmaker(autocommit=False, autoflush=False, bind=engine)
-    session = testing_session_local()
-    try:
-        yield session
-    finally:
-        session.close()
-        Base.metadata.drop_all(bind=engine)
-        engine.dispose()
-
-
-@pytest.fixture()
-def client(db_session: Session) -> Generator[TestClient, None, None]:
-    def override_get_db() -> Generator[Session, None, None]:
-        try:
-            yield db_session
-        finally:
-            pass
-
-    app.dependency_overrides[get_db] = override_get_db
-    with TestClient(app) as test_client:
-        yield test_client
-    app.dependency_overrides.clear()
-
-
-@pytest.fixture()
-def demo_user(db_session: Session) -> User:
-    settings = get_settings()
-    user = User(
-        email=settings.demo_user_email.lower(),
-        password_hash=hash_password(settings.demo_user_password),
-    )
-    db_session.add(user)
-    db_session.commit()
-    db_session.refresh(user)
-    return user
 
 
 def test_login_sets_httponly_cookie(
