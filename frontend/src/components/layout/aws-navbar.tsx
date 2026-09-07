@@ -83,7 +83,7 @@ export function AwsNavbar() {
 
           <span className="gradient-glow gradient-glow--pill hidden sm:inline-flex">
             <Link
-              href="/login"
+              href="/login?mode=signup"
               className="btn-pill btn-pill-primary btn-pill--nav-cta"
             >
               Create account
@@ -125,7 +125,10 @@ export function AwsNavbar() {
               Sign in to console
             </Link>
             <span className="gradient-glow gradient-glow--pill gradient-glow--block mt-2 sm:hidden">
-              <Link href="/login" className="btn-pill btn-pill-primary btn-pill--nav-cta w-full">
+              <Link
+                href="/login?mode=signup"
+                className="btn-pill btn-pill-primary btn-pill--nav-cta w-full"
+              >
                 Create account
               </Link>
             </span>

@@ -108,7 +108,7 @@ export function AwsTopBar() {
                   className={`hover:gradient-glow ${profileOpen ? "is-glowing" : ""}`}
                 >
                   <Link
-                    href="/login"
+                    href="/login?mode=signup"
                     className="btn-pill btn-pill-primary profile-menu__cta"
                     onClick={() => setProfileOpen(false)}
                   >

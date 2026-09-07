@@ -144,14 +144,11 @@ export async function getCurrentUser(): Promise<AuthUser | null> {
   return response.json() as Promise<AuthUser>;
 }
 
-/** Ensure a session cookie exists (demo login for console entry without Builder ID). */
+/** @deprecated Prefer getCurrentUser — console routes no longer auto-login. */
 export async function ensureSession(): Promise<AuthUser> {
   const current = await getCurrentUser();
   if (current) return current;
-
-  const email = process.env.NEXT_PUBLIC_DEMO_EMAIL || "demo@example.com";
-  const password = process.env.NEXT_PUBLIC_DEMO_PASSWORD || "DemoPass123!";
-  return login(email, password);
+  throw new ApiError("Not signed in", 401);
 }
 
 export async function listHostedZones(params?: {

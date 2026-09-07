@@ -8,7 +8,8 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import { ApiError, ensureSession, type AuthUser } from "@/lib/api";
+import { usePathname, useRouter } from "next/navigation";
+import { ApiError, getCurrentUser, type AuthUser } from "@/lib/api";
 import { ensureMockSession, getMockSession, type MockSession } from "@/lib/mock/session";
 
 type ConsoleAuthState = {
@@ -35,6 +36,8 @@ const ConsoleAuthContext = createContext<ConsoleAuthState>({
 });
 
 export function ConsoleAuthProvider({ children }: { children: ReactNode }) {
+  const router = useRouter();
+  const pathname = usePathname();
   const [user, setUser] = useState<AuthUser | null>(null);
   const [session, setSession] = useState<MockSession>(defaultSession);
   const [ready, setReady] = useState(false);
@@ -45,8 +48,18 @@ export function ConsoleAuthProvider({ children }: { children: ReactNode }) {
 
     (async () => {
       try {
-        const current = await ensureSession();
+        const current = await getCurrentUser();
         if (cancelled) return;
+
+        if (!current) {
+          const next = pathname ? `?next=${encodeURIComponent(pathname)}` : "";
+          router.replace(`/login${next}`);
+          setUser(null);
+          setError("");
+          setReady(true);
+          return;
+        }
+
         setUser(current);
         setSession((prev) => ({
           ...prev,
@@ -55,11 +68,13 @@ export function ConsoleAuthProvider({ children }: { children: ReactNode }) {
         setError("");
       } catch (err) {
         if (cancelled) return;
+        setUser(null);
         setError(
           err instanceof ApiError
             ? err.message
             : "Unable to reach the API. Is the backend running?",
         );
+        router.replace("/login");
       } finally {
         if (!cancelled) setReady(true);
       }
@@ -68,12 +83,22 @@ export function ConsoleAuthProvider({ children }: { children: ReactNode }) {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [pathname, router]);
 
   const value = useMemo(
     () => ({ user, session, ready, error }),
     [user, session, ready, error],
   );
+
+  if (!ready || !user) {
+    return (
+      <ConsoleAuthContext.Provider value={value}>
+        <div className="console-auth-gate" role="status" aria-live="polite">
+          {error ? error : "Checking sign-in…"}
+        </div>
+      </ConsoleAuthContext.Provider>
+    );
+  }
 
   return (
     <ConsoleAuthContext.Provider value={value}>{children}</ConsoleAuthContext.Provider>

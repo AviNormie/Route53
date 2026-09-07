@@ -1,8 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { FormEvent, useEffect, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { FormEvent, Suspense, useEffect, useState } from "react";
 import { FaAws } from "react-icons/fa";
 import {
   AmazonIcon,
@@ -21,21 +21,39 @@ const socialProviders = [
 
 type AuthMode = "signin" | "signup";
 
-export default function LoginPage() {
+function safeNextPath(raw: string | null): string {
+  if (!raw || !raw.startsWith("/") || raw.startsWith("//")) return "/dashboard";
+  return raw;
+}
+
+function LoginPageContent() {
   const router = useRouter();
-  const [mode, setMode] = useState<AuthMode>("signin");
+  const searchParams = useSearchParams();
+  const nextPath = safeNextPath(searchParams.get("next"));
+  const initialMode: AuthMode =
+    searchParams.get("mode") === "signup" ? "signup" : "signin";
+  const [mode, setMode] = useState<AuthMode>(initialMode);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [showPassword, setShowPassword] = useState(false);
+  const [showPassword, setShowPassword] = useState(initialMode === "signup");
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
+
+  useEffect(() => {
+    const nextMode: AuthMode =
+      searchParams.get("mode") === "signup" ? "signup" : "signin";
+    setMode(nextMode);
+    setShowPassword(nextMode === "signup");
+    setPassword("");
+    setError("");
+  }, [searchParams]);
 
   useEffect(() => {
     let cancelled = false;
     void (async () => {
       try {
         const user = await getCurrentUser();
-        if (!cancelled && user) router.replace("/dashboard");
+        if (!cancelled && user) router.replace(nextPath);
       } catch {
         // stay on login
       }
@@ -43,7 +61,7 @@ export default function LoginPage() {
     return () => {
       cancelled = true;
     };
-  }, [router]);
+  }, [router, nextPath]);
 
   const isSignup = mode === "signup";
   const passwordVisible = isSignup || showPassword;
@@ -53,6 +71,11 @@ export default function LoginPage() {
     setError("");
     setPassword("");
     setShowPassword(next === "signup");
+    const params = new URLSearchParams(searchParams.toString());
+    if (next === "signup") params.set("mode", "signup");
+    else params.delete("mode");
+    const qs = params.toString();
+    router.replace(qs ? `/login?${qs}` : "/login");
   };
 
   const onSubmit = async (event: FormEvent<HTMLFormElement>) => {
@@ -87,7 +110,7 @@ export default function LoginPage() {
       } else {
         await login(trimmedEmail, password);
       }
-      router.push("/dashboard");
+      router.push(nextPath);
     } catch (err) {
       const message =
         err instanceof ApiError
@@ -252,5 +275,13 @@ export default function LoginPage() {
         </p>
       </footer>
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={<div className="login-page" aria-busy="true" />}>
+      <LoginPageContent />
+    </Suspense>
   );
 }
