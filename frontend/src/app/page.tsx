@@ -26,8 +26,8 @@ export default function HomePage() {
       </div>
 
       <main>
+        <Route53Navbar />
         <div className="hero-gradient">
-          <Route53Navbar />
           <Hero />
         </div>
         <Benefits />
