@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { SiteFeedbackModal } from "@/components/route53/site-feedback-modal";
 import { ChevronRightIcon, StarIcon } from "@/components/ui/icons";
 
 const breadcrumbs = [
@@ -10,7 +11,7 @@ const breadcrumbs = [
 ] as const;
 
 export function Hero() {
-  const [favorited, setFavorited] = useState(false);
+  const [feedbackOpen, setFeedbackOpen] = useState(false);
 
   return (
     <section id="overview" className="relative overflow-hidden">
@@ -59,12 +60,15 @@ export function Hero() {
       <button
         type="button"
         className="favorite-fab"
-        aria-pressed={favorited}
-        aria-label={favorited ? "Remove from favorites" : "Add to favorites"}
-        onClick={() => setFavorited((value) => !value)}
+        aria-label="Feedback"
+        aria-haspopup="dialog"
+        aria-expanded={feedbackOpen}
+        onClick={() => setFeedbackOpen(true)}
       >
         <StarIcon />
       </button>
+
+      <SiteFeedbackModal open={feedbackOpen} onClose={() => setFeedbackOpen(false)} />
     </section>
   );
 }

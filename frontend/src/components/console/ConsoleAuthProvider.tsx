@@ -90,16 +90,6 @@ export function ConsoleAuthProvider({ children }: { children: ReactNode }) {
     [user, session, ready, error],
   );
 
-  if (!ready || !user) {
-    return (
-      <ConsoleAuthContext.Provider value={value}>
-        <div className="console-auth-gate" role="status" aria-live="polite">
-          {error ? error : "Checking sign-in…"}
-        </div>
-      </ConsoleAuthContext.Provider>
-    );
-  }
-
   return (
     <ConsoleAuthContext.Provider value={value}>{children}</ConsoleAuthContext.Provider>
   );
