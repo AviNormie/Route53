@@ -1050,6 +1050,14 @@ img {
   border-top-right-radius: clamp(1.5rem, 4vw, 2.5rem);
 }
 
+.footer-shell__cta {
+  color: var(--aws-ink);
+}
+
+.footer-shell__cta:hover {
+  color: var(--aws-ink);
+}
+
 @media (max-width: 1023px) {
   :root {
     --header-offset: 0px;

@@ -48,7 +48,10 @@ export function AwsFooter() {
     <footer className="footer-shell mt-10 pt-10 pb-16">
       <div className="page-shell">
         <div className="mb-10 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <a href="#" className="btn-pill inline-flex min-h-12 bg-white px-6 font-bold text-aws-ink hover:bg-aws-muted-bg">
+          <a
+            href="/login?mode=signup"
+            className="btn-pill footer-shell__cta inline-flex min-h-12 bg-white px-6 font-bold hover:bg-aws-muted-bg"
+          >
             Create an AWS account
           </a>
 
