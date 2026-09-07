@@ -42,3 +42,20 @@ poetry run alembic upgrade head
 ```bash
 docker compose up --build
 ```
+
+
+## Auth
+
+Session-cookie auth (not JWT):
+
+- `POST /api/v1/auth/login`
+- `POST /api/v1/auth/logout`
+- `GET /api/v1/auth/me`
+
+Seed the demo user:
+
+```bash
+poetry run python -m app.db.seed
+```
+
+Demo credentials come from `DEMO_USER_EMAIL` / `DEMO_USER_PASSWORD` in `.env`.

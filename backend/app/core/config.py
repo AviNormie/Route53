@@ -35,6 +35,14 @@ class Settings(BaseSettings):
         default="dev",
         alias="ENVIRONMENT",
     )
+    demo_user_email: str = Field(
+        default="demo@example.com",
+        alias="DEMO_USER_EMAIL",
+    )
+    demo_user_password: str = Field(
+        default="DemoPass123!",
+        alias="DEMO_USER_PASSWORD",
+    )
 
     @field_validator("cors_origins", mode="before")
     @classmethod

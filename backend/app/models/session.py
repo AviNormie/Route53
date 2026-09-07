@@ -6,8 +6,8 @@ from typing import TYPE_CHECKING
 from sqlalchemy import DateTime, ForeignKey, String, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
+from app.core.security import generate_session_token
 from app.db.base import Base
-from app.models.ids import generate_session_id
 
 if TYPE_CHECKING:
     from app.models.user import User
@@ -19,7 +19,7 @@ class Session(Base):
     id: Mapped[str] = mapped_column(
         String(128),
         primary_key=True,
-        default=generate_session_id,
+        default=generate_session_token,
     )
     user_id: Mapped[int] = mapped_column(
         ForeignKey("users.id", ondelete="CASCADE"),
