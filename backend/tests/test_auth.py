@@ -1,6 +1,7 @@
 from datetime import UTC, datetime, timedelta
 
 from fastapi.testclient import TestClient
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.core.config import get_settings
@@ -79,3 +80,43 @@ def test_invalid_credentials(client: TestClient, demo_user: User) -> None:
         json={"email": demo_user.email, "password": "wrong-password"},
     )
     assert response.status_code == 401
+
+
+def test_signup_creates_user_and_session(
+    client: TestClient, db_session: Session
+) -> None:
+    response = client.post(
+        "/api/v1/auth/signup",
+        json={"email": "new.user@example.com", "password": "SecurePass1"},
+    )
+    assert response.status_code == 201
+    body = response.json()
+    assert body["email"] == "new.user@example.com"
+    assert SESSION_COOKIE_NAME in response.cookies
+
+    user = db_session.scalar(select(User).where(User.email == "new.user@example.com"))
+    assert user is not None
+    assert db_session.get(AuthSession, response.cookies[SESSION_COOKIE_NAME]) is not None
+
+    me = client.get("/api/v1/auth/me")
+    assert me.status_code == 200
+    assert me.json()["email"] == "new.user@example.com"
+
+
+def test_signup_rejects_duplicate_email(
+    client: TestClient, demo_user: User
+) -> None:
+    response = client.post(
+        "/api/v1/auth/signup",
+        json={"email": demo_user.email, "password": "SecurePass1"},
+    )
+    assert response.status_code == 409
+    assert "already exists" in response.json()["detail"].lower()
+
+
+def test_signup_rejects_short_password(client: TestClient) -> None:
+    response = client.post(
+        "/api/v1/auth/signup",
+        json={"email": "short@example.com", "password": "short"},
+    )
+    assert response.status_code == 422

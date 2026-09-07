@@ -13,7 +13,7 @@ from fastapi import FastAPI, Request, status
 from fastapi.responses import JSONResponse
 
 from app.core.config import settings
-from app.services.auth_service import AuthError
+from app.services.auth_service import AuthError, EmailAlreadyRegisteredError
 from app.services.dns_record_service import DnsRecordNotFoundError
 from app.services.hosted_zone_service import (
     HostedZoneConflictError,
@@ -87,6 +87,12 @@ def register_exception_handlers(app: FastAPI) -> None:
     @app.exception_handler(AuthError)
     async def auth_error_handler(_request: Request, exc: AuthError) -> JSONResponse:
         return _error_response(status.HTTP_401_UNAUTHORIZED, str(exc))
+
+    @app.exception_handler(EmailAlreadyRegisteredError)
+    async def email_already_registered_handler(
+        _request: Request, exc: EmailAlreadyRegisteredError
+    ) -> JSONResponse:
+        return _error_response(status.HTTP_409_CONFLICT, str(exc))
 
     @app.exception_handler(Exception)
     async def unhandled_exception_handler(

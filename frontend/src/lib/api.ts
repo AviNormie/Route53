@@ -116,6 +116,13 @@ export async function login(email: string, password: string): Promise<AuthUser> 
   });
 }
 
+export async function signup(email: string, password: string): Promise<AuthUser> {
+  return apiFetch<AuthUser>("/api/v1/auth/signup", {
+    method: "POST",
+    body: JSON.stringify({ email, password }),
+  });
+}
+
 export async function logout(): Promise<void> {
   await apiFetch<void>("/api/v1/auth/logout", { method: "POST" });
 }

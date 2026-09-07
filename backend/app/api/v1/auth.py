@@ -3,7 +3,7 @@ from fastapi import APIRouter, Request, Response
 from app.api.deps import CurrentUser, DbDep, SettingsDep
 from app.core.rate_limit import login_rate_limiter, parse_rate_limit
 from app.core.security import SESSION_COOKIE_NAME
-from app.schemas.auth import LoginRequest, MessageOut, UserOut
+from app.schemas.auth import LoginRequest, MessageOut, SignupRequest, UserOut
 from app.services import auth_service
 
 router = APIRouter(prefix="/auth", tags=["auth"])
@@ -60,6 +60,37 @@ def login(
     )
 
     user, auth_session = auth_service.login(
+        db,
+        email=str(payload.email),
+        password=payload.password,
+    )
+
+    _set_session_cookie(
+        response,
+        auth_session.id,
+        max_age_seconds=settings.session_expire_minutes * 60,
+        secure=settings.environment == "prod",
+    )
+    return UserOut.model_validate(user)
+
+
+@router.post("/signup", response_model=UserOut, status_code=201)
+def signup(
+    payload: SignupRequest,
+    request: Request,
+    response: Response,
+    db: DbDep,
+    settings: SettingsDep,
+) -> UserOut:
+    max_calls, period_seconds = parse_rate_limit(settings.login_rate_limit)
+    client_host = request.client.host if request.client else "unknown"
+    login_rate_limiter.hit(
+        f"signup:{client_host}",
+        max_calls=max_calls,
+        period_seconds=period_seconds,
+    )
+
+    user, auth_session = auth_service.signup(
         db,
         email=str(payload.email),
         password=payload.password,

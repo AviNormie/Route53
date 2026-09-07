@@ -765,14 +765,30 @@ img {
   text-align: center;
 }
 
-.login-card__footer a {
+.login-card__footer a,
+.login-card__footer-btn {
   color: rgb(66, 180, 255);
   font-size: 0.9rem;
   font-weight: 500;
 }
 
-.login-card__footer a:hover {
+.login-card__footer a:hover,
+.login-card__footer-btn:hover {
   text-decoration: underline;
+}
+
+.login-card__footer-text {
+  margin: 0;
+  color: rgb(198, 198, 205);
+  font-size: 0.9rem;
+}
+
+.login-card__footer-btn {
+  border: none;
+  background: none;
+  padding: 0;
+  cursor: pointer;
+  font: inherit;
 }
 
 .login-page__footer {

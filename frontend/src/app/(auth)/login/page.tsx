@@ -10,7 +10,7 @@ import {
   GitHubIcon,
   GoogleColorIcon,
 } from "@/components/ui/social-icons";
-import { ApiError, login } from "@/lib/api";
+import { ApiError, login, signup } from "@/lib/api";
 
 const socialProviders = [
   { id: "google", label: "Continue with Google", Icon: GoogleColorIcon },
@@ -19,13 +19,26 @@ const socialProviders = [
   { id: "amazon", label: "Continue with Amazon", Icon: AmazonIcon },
 ] as const;
 
+type AuthMode = "signin" | "signup";
+
 export default function LoginPage() {
   const router = useRouter();
+  const [mode, setMode] = useState<AuthMode>("signin");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
+
+  const isSignup = mode === "signup";
+  const passwordVisible = isSignup || showPassword;
+
+  const switchMode = (next: AuthMode) => {
+    setMode(next);
+    setError("");
+    setPassword("");
+    setShowPassword(next === "signup");
+  };
 
   const onSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -37,7 +50,7 @@ export default function LoginPage() {
       return;
     }
 
-    if (!showPassword) {
+    if (!isSignup && !showPassword) {
       setShowPassword(true);
       return;
     }
@@ -47,15 +60,26 @@ export default function LoginPage() {
       return;
     }
 
+    if (isSignup && password.length < 8) {
+      setError("Password must be at least 8 characters.");
+      return;
+    }
+
     setSubmitting(true);
     try {
-      await login(trimmedEmail, password);
+      if (isSignup) {
+        await signup(trimmedEmail, password);
+      } else {
+        await login(trimmedEmail, password);
+      }
       router.push("/dashboard");
     } catch (err) {
       const message =
         err instanceof ApiError
           ? err.message
-          : "Unable to sign in. Check that the API is running.";
+          : isSignup
+            ? "Unable to create account. Check that the API is running."
+            : "Unable to sign in. Check that the API is running.";
       setError(message);
     } finally {
       setSubmitting(false);
@@ -72,7 +96,7 @@ export default function LoginPage() {
         <div className=" gradient-glow--card is-glowing login-card-glow">
           <section className="login-card" aria-labelledby="login-heading">
             <h1 id="login-heading" className="login-card__title">
-              Get started
+              {isSignup ? "Create account" : "Get started"}
             </h1>
 
             <form className="login-card__form" onSubmit={onSubmit} noValidate>
@@ -89,20 +113,20 @@ export default function LoginPage() {
                     setEmail(event.target.value);
                     if (error) setError("");
                   }}
-                  className={`login-field__input${error && !showPassword ? " is-invalid" : ""}`}
+                  className={`login-field__input${error && !passwordVisible ? " is-invalid" : ""}`}
                   required
                   disabled={submitting}
                 />
               </label>
 
-              {showPassword ? (
+              {passwordVisible ? (
                 <label className="login-field" htmlFor="login-password">
                   <span className="login-field__label">Password</span>
                   <input
                     id="login-password"
                     name="password"
                     type="password"
-                    autoComplete="current-password"
+                    autoComplete={isSignup ? "new-password" : "current-password"}
                     value={password}
                     onChange={(event) => {
                       setPassword(event.target.value);
@@ -110,8 +134,9 @@ export default function LoginPage() {
                     }}
                     className={`login-field__input${error ? " is-invalid" : ""}`}
                     required
-                    autoFocus
+                    autoFocus={!isSignup}
                     disabled={submitting}
+                    minLength={isSignup ? 8 : undefined}
                   />
                 </label>
               ) : null}
@@ -127,7 +152,13 @@ export default function LoginPage() {
                 className="login-btn login-btn--primary"
                 disabled={submitting}
               >
-                {submitting ? "Signing in…" : "Continue"}
+                {submitting
+                  ? isSignup
+                    ? "Creating account…"
+                    : "Signing in…"
+                  : isSignup
+                    ? "Create account"
+                    : "Continue"}
               </button>
             </form>
 
@@ -147,14 +178,37 @@ export default function LoginPage() {
             </div>
 
             <p className="login-legal">
-              By clicking &quot;Continue&quot; or continuing with an alternative sign-in method, you
-              agree to the <a href="#">AWS Customer Agreement</a>, and you acknowledge you have
-              read the <a href="#">AWS Privacy Notice</a>. By continuing, you will create an{" "}
+              By clicking &quot;{isSignup ? "Create account" : "Continue"}&quot; or continuing
+              with an alternative sign-in method, you agree to the{" "}
+              <a href="#">AWS Customer Agreement</a>, and you acknowledge you have read the{" "}
+              <a href="#">AWS Privacy Notice</a>. By continuing, you will create an{" "}
               <a href="#">AWS Builder ID</a>.
             </p>
 
             <div className="login-card__footer">
-              <a href="#">Trouble Signing In?</a>
+              {isSignup ? (
+                <p className="login-card__footer-text">
+                  Already have an account?{" "}
+                  <button
+                    type="button"
+                    className="login-card__footer-btn"
+                    onClick={() => switchMode("signin")}
+                  >
+                    Sign in
+                  </button>
+                </p>
+              ) : (
+                <p className="login-card__footer-text">
+                  New to AWS?{" "}
+                  <button
+                    type="button"
+                    className="login-card__footer-btn"
+                    onClick={() => switchMode("signup")}
+                  >
+                    Create an account
+                  </button>
+                </p>
+              )}
             </div>
           </section>
         </div>
