@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 560" role="img" aria-label="Dark geometric cubes">
+  <defs>
+    <linearGradient id="dark" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#111827"/>
+      <stop offset="100%" stop-color="#1f2937"/>
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="560" fill="url(#dark)"/>
+  <g fill="none" stroke="#94a3b8" stroke-width="1.5" opacity="0.35">
+    <path d="M80 120l70-35 70 35v70l-70 35-70-35z"/>
+    <path d="M260 80l70-35 70 35v70l-70 35-70-35z"/>
+    <path d="M450 140l70-35 70 35v70l-70 35-70-35z"/>
+    <path d="M640 70l70-35 70 35v70l-70 35-70-35z"/>
+    <path d="M830 130l70-35 70 35v70l-70 35-70-35z"/>
+    <path d="M160 280l70-35 70 35v70l-70 35-70-35z"/>
+    <path d="M360 250l70-35 70 35v70l-70 35-70-35z"/>
+    <path d="M560 300l70-35 70 35v70l-70 35-70-35z"/>
+    <path d="M760 260l70-35 70 35v70l-70 35-70-35z"/>
+    <path d="M960 290l70-35 70 35v70l-70 35-70-35z"/>
+    <path d="M240 430l70-35 70 35v70l-70 35-70-35z"/>
+    <path d="M470 450l70-35 70 35v70l-70 35-70-35z"/>
+    <path d="M720 420l70-35 70 35v70l-70 35-70-35z"/>
+    <path d="M940 440l70-35 70 35v70l-70 35-70-35z"/>
+  </g>
+</svg>

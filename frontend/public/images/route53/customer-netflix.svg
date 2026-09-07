@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 900" role="img" aria-label="Netflix customer story placeholder">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#111827"/>
+      <stop offset="100%" stop-color="#1f2937"/>
+    </linearGradient>
+    <radialGradient id="redGlow" cx="30%" cy="30%" r="70%">
+      <stop offset="0%" stop-color="#ef4444" stop-opacity="0.55"/>
+      <stop offset="100%" stop-color="#ef4444" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="1600" height="900" fill="url(#bg)"/>
+  <rect width="1600" height="900" fill="url(#redGlow)"/>
+  <g opacity="0.35" stroke="#f87171" stroke-width="2" fill="none">
+    <path d="M120 120h360v220H120z"/>
+    <path d="M520 160h280v280H520z"/>
+    <path d="M860 100h420v300H860z"/>
+    <path d="M180 420h420v240H180z"/>
+    <path d="M680 500h520v220H680z"/>
+  </g>
+  <text x="90" y="780" fill="#e50914" font-family="Helvetica, Arial, sans-serif" font-size="64" font-weight="700">NETFLIX</text>
+  <text x="90" y="840" fill="#fff" font-family="Helvetica, Arial, sans-serif" font-size="34" font-weight="600">Customer story</text>
+</svg>
