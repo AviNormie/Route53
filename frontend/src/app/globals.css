@@ -611,6 +611,23 @@ img {
   box-shadow: 0 0 0 1px rgb(66, 180, 255);
 }
 
+.login-field__input.is-invalid {
+  border-color: #ff6b6b;
+  box-shadow: 0 0 0 1px #ff6b6b;
+}
+
+.login-field__error {
+  margin: -0.35rem 0 0;
+  color: #ff8f8f;
+  font-size: 0.85rem;
+  line-height: 1.35;
+}
+
+.login-btn:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
 .login-btn {
   position: relative;
   display: inline-flex;
@@ -1762,4 +1779,92 @@ img {
   .signin-card__title {
     font-size: 20px;
   }
+}
+
+/* —— Post-login dashboard shell —— */
+.dashboard-page {
+  min-height: 100vh;
+  min-height: 100dvh;
+  background: #f2f3f3;
+  color: #16191f;
+}
+
+.dashboard-page__loading {
+  margin: 0;
+  padding: 3rem 1.5rem;
+  text-align: center;
+  color: #545b64;
+}
+
+.dashboard-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  min-height: 48px;
+  padding: 0 1.25rem;
+  background: #232f3e;
+  color: #fff;
+}
+
+.dashboard-topbar__brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  color: inherit;
+  font-size: 1.35rem;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.dashboard-topbar__brand span {
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+
+.dashboard-topbar__actions {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+}
+
+.dashboard-topbar__email {
+  color: #d5dbdb;
+  font-size: 0.85rem;
+}
+
+.dashboard-topbar__signout {
+  padding: 0.35rem 0.75rem;
+  border: 1px solid #687078;
+  border-radius: 0.25rem;
+  background: transparent;
+  color: #fff;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.dashboard-topbar__signout:hover {
+  background: rgb(255 255 255 / 0.08);
+}
+
+.dashboard-main {
+  width: min(960px, calc(100% - 2rem));
+  margin: 2rem auto;
+  padding: 1.5rem;
+  border: 1px solid #d5dbdb;
+  border-radius: 0.5rem;
+  background: #fff;
+}
+
+.dashboard-main__title {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 700;
+}
+
+.dashboard-main__copy {
+  margin: 0.75rem 0 0;
+  color: #545b64;
+  line-height: 1.5;
 }

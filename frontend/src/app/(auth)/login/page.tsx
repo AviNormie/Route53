@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { FormEvent, useState } from "react";
 import { FaAws } from "react-icons/fa";
 import {
@@ -9,6 +10,7 @@ import {
   GitHubIcon,
   GoogleColorIcon,
 } from "@/components/ui/social-icons";
+import { ApiError, login } from "@/lib/api";
 
 const socialProviders = [
   { id: "google", label: "Continue with Google", Icon: GoogleColorIcon },
@@ -18,10 +20,46 @@ const socialProviders = [
 ] as const;
 
 export default function LoginPage() {
+  const router = useRouter();
   const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [error, setError] = useState("");
+  const [submitting, setSubmitting] = useState(false);
 
-  const onSubmit = (event: FormEvent<HTMLFormElement>) => {
+  const onSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    setError("");
+
+    const trimmedEmail = email.trim();
+    if (!trimmedEmail) {
+      setError("Enter your email address.");
+      return;
+    }
+
+    if (!showPassword) {
+      setShowPassword(true);
+      return;
+    }
+
+    if (!password) {
+      setError("Enter your password.");
+      return;
+    }
+
+    setSubmitting(true);
+    try {
+      await login(trimmedEmail, password);
+      router.push("/dashboard");
+    } catch (err) {
+      const message =
+        err instanceof ApiError
+          ? err.message
+          : "Unable to sign in. Check that the API is running.";
+      setError(message);
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -37,7 +75,7 @@ export default function LoginPage() {
               Get started
             </h1>
 
-            <form className="login-card__form" onSubmit={onSubmit}>
+            <form className="login-card__form" onSubmit={onSubmit} noValidate>
               <label className="login-field" htmlFor="login-email">
                 <span className="login-field__label">Email</span>
                 <input
@@ -47,14 +85,49 @@ export default function LoginPage() {
                   autoComplete="email"
                   placeholder="username@example.com"
                   value={email}
-                  onChange={(event) => setEmail(event.target.value)}
-                  className="login-field__input"
+                  onChange={(event) => {
+                    setEmail(event.target.value);
+                    if (error) setError("");
+                  }}
+                  className={`login-field__input${error && !showPassword ? " is-invalid" : ""}`}
                   required
+                  disabled={submitting}
                 />
               </label>
 
-              <button type="submit" className="login-btn login-btn--primary">
-                Continue
+              {showPassword ? (
+                <label className="login-field" htmlFor="login-password">
+                  <span className="login-field__label">Password</span>
+                  <input
+                    id="login-password"
+                    name="password"
+                    type="password"
+                    autoComplete="current-password"
+                    value={password}
+                    onChange={(event) => {
+                      setPassword(event.target.value);
+                      if (error) setError("");
+                    }}
+                    className={`login-field__input${error ? " is-invalid" : ""}`}
+                    required
+                    autoFocus
+                    disabled={submitting}
+                  />
+                </label>
+              ) : null}
+
+              {error ? (
+                <p className="login-field__error" role="alert">
+                  {error}
+                </p>
+              ) : null}
+
+              <button
+                type="submit"
+                className="login-btn login-btn--primary"
+                disabled={submitting}
+              >
+                {submitting ? "Signing in…" : "Continue"}
               </button>
             </form>
 

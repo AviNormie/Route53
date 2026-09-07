@@ -29,9 +29,18 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
+# Credentials require an explicit allowlist (not "*"). In dev, also accept any
+# localhost / 127.0.0.1 port so Next.js network URLs don't fail preflight.
+_cors_origin_regex = (
+    r"https?://(localhost|127\.0\.0\.1)(:\d+)?"
+    if settings.environment == "dev"
+    else None
+)
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.cors_origins,
+    allow_origin_regex=_cors_origin_regex,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
