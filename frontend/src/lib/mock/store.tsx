@@ -23,7 +23,7 @@ import {
   type MockDnsRecord,
 } from "@/lib/mock/records";
 
-const STORAGE_KEY = "r53-mock-dns-store";
+const STORAGE_KEY = "r53-mock-dns-store-v2";
 
 type StoreState = {
   zones: MockHostedZone[];
@@ -70,7 +70,7 @@ type MockDnsStore = {
 const MockDnsContext = createContext<MockDnsStore | null>(null);
 
 function defaultNsValue(): string {
-  return "ns-1536.awsdns-00.co.uk.\nns-0.awsdns-00.com.\nns-1024.awsdns-00.org.\nns-512.awsdns-00.net.";
+  return "ns-988.awsdns-59.net.\nns-1358.awsdns-41.org.\nns-321.awsdns-40.com.\nns-1624.awsdns-11.co.uk.";
 }
 
 function syncRecordCounts(zones: MockHostedZone[], records: MockDnsRecord[]): MockHostedZone[] {
@@ -130,6 +130,7 @@ export function MockDnsProvider({ children }: { children: ReactNode }) {
       type: input.type,
       description: input.description.trim(),
       recordCount: 2,
+      createdBy: "Route 53",
     };
     const ns: MockDnsRecord = {
       id: generateRecordId(),
@@ -139,6 +140,7 @@ export function MockDnsProvider({ children }: { children: ReactNode }) {
       value: defaultNsValue(),
       ttl: 172800,
       routingPolicy: "Simple",
+      alias: false,
     };
     const soa: MockDnsRecord = {
       id: generateRecordId(),
@@ -148,6 +150,7 @@ export function MockDnsProvider({ children }: { children: ReactNode }) {
       value: `ns-1536.awsdns-00.co.uk. awsdns-hostmaster.amazon.com. 1 7200 900 1209600 86400`,
       ttl: 900,
       routingPolicy: "Simple",
+      alias: false,
     };
     setState((prev) => {
       const records = [...prev.records, ns, soa];

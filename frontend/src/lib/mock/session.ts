@@ -7,7 +7,7 @@ export type MockSession = {
 export const MOCK_SESSION: MockSession = {
   id: "demo-user",
   name: "avi",
-  workgroup: "Workp... (497535504622)",
+  workgroup: "Workpunkt (497535504622)",
 };
 
 const STORAGE_KEY = "r53-mock-session";

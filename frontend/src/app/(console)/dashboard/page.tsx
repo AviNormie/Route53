@@ -80,7 +80,14 @@ export default function DashboardPage() {
               <div key={action.title} className="console-action-tile">
                 <h3 className="console-action-tile__title">{action.title}</h3>
                 <p className="console-action-tile__body">{action.body}</p>
-                <Link href={action.href} className="console-btn console-btn--normal">
+                <Link
+                  href={action.href}
+                  className={`console-btn ${
+                    action.cta === "Create hosted zone"
+                      ? "console-btn--primary"
+                      : "console-btn--normal"
+                  }`}
+                >
                   {action.cta}
                 </Link>
               </div>

@@ -34,7 +34,12 @@ export default function CreateHostedZonePage() {
   };
 
   return (
-    <ConsoleLayout breadcrumb="Create hosted zone">
+    <ConsoleLayout
+      breadcrumbs={[
+        { label: "Hosted zones", href: "/hosted-zones" },
+        { label: "Create hosted zone" },
+      ]}
+    >
       <div className="console-page console-page--narrow">
         <h1 className="console-page__title">Create hosted zone</h1>
         <p className="console-page__muted">

@@ -1,9 +1,7 @@
 import type { ButtonHTMLAttributes, ReactNode } from "react";
 
-type Variant = "normal" | "primary" | "link";
-
 type ConsoleButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
-  variant?: Variant;
+  variant?: "normal" | "primary" | "link" | "ghost";
   children: ReactNode;
 };
 

@@ -1,8 +1,13 @@
-import type { InputHTMLAttributes, ReactNode, SelectHTMLAttributes, TextareaHTMLAttributes } from "react";
+import type {
+  InputHTMLAttributes,
+  ReactNode,
+  SelectHTMLAttributes,
+  TextareaHTMLAttributes,
+} from "react";
 import { FiSearch } from "react-icons/fi";
 
 type FieldProps = {
-  label: string;
+  label: ReactNode;
   hint?: ReactNode;
   htmlFor?: string;
   children: ReactNode;

@@ -2,140 +2,52 @@
 
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
-import { useMemo, useState, type FormEvent } from "react";
-import { ConsoleButton } from "@/components/console/ConsoleButton";
-import { ConsoleCard } from "@/components/console/ConsoleCard";
+import { useMemo, useState } from "react";
+import { FiRefreshCw, FiSettings } from "react-icons/fi";
+import { HiChevronDown, HiChevronLeft, HiChevronRight } from "react-icons/hi";
 import { ConsoleLayout } from "@/components/console/ConsoleLayout";
-import {
-  ConsoleField,
-  ConsoleInput,
-  ConsoleSearch,
-  ConsoleSelect,
-  ConsoleTextarea,
-} from "@/components/console/ConsoleInput";
-import type { DnsRecordType, MockDnsRecord } from "@/lib/mock/records";
+import { ConsoleSearch } from "@/components/console/ConsoleInput";
 import { useMockDns } from "@/lib/mock/store";
-
-const RECORD_TYPES: DnsRecordType[] = [
-  "A",
-  "AAAA",
-  "CNAME",
-  "MX",
-  "TXT",
-  "NS",
-  "SOA",
-  "SRV",
-  "CAA",
-];
-
-const emptyForm = {
-  name: "",
-  type: "A" as DnsRecordType,
-  value: "",
-  ttl: "300",
-  routingPolicy: "Simple",
-};
 
 export default function HostedZoneDetailPage() {
   const params = useParams<{ zoneId: string }>();
   const router = useRouter();
   const zoneId = params.zoneId;
-  const {
-    hydrated,
-    getZone,
-    getRecordsForZone,
-    createRecord,
-    updateRecord,
-    deleteRecord,
-    deleteZone,
-  } = useMockDns();
+  const { hydrated, getZone, getRecordsForZone, deleteRecord, deleteZone } = useMockDns();
 
   const zone = getZone(zoneId);
   const records = getRecordsForZone(zoneId);
 
   const [query, setQuery] = useState("");
-  const [typeFilter, setTypeFilter] = useState<string>("ALL");
-  const [editorOpen, setEditorOpen] = useState(false);
-  const [editing, setEditing] = useState<MockDnsRecord | null>(null);
-  const [form, setForm] = useState(emptyForm);
-  const [error, setError] = useState("");
+  const [detailsOpen, setDetailsOpen] = useState(true);
+  const [tab, setTab] = useState<"records" | "recovery" | "dnssec" | "tags">("records");
+  const [selected, setSelected] = useState<string[]>([]);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
-    return records.filter((r) => {
-      if (typeFilter !== "ALL" && r.type !== typeFilter) return false;
-      if (!q) return true;
-      return (
+    if (!q) return records;
+    return records.filter(
+      (r) =>
         r.name.toLowerCase().includes(q) ||
         r.type.toLowerCase().includes(q) ||
-        r.value.toLowerCase().includes(q)
-      );
-    });
-  }, [records, query, typeFilter]);
-
-  const openCreate = () => {
-    setEditing(null);
-    setForm({
-      ...emptyForm,
-      name: zone?.name ?? "",
-    });
-    setError("");
-    setEditorOpen(true);
-  };
-
-  const openEdit = (record: MockDnsRecord) => {
-    setEditing(record);
-    setForm({
-      name: record.name,
-      type: record.type,
-      value: record.value,
-      ttl: String(record.ttl),
-      routingPolicy: record.routingPolicy,
-    });
-    setError("");
-    setEditorOpen(true);
-  };
-
-  const onSave = (e: FormEvent) => {
-    e.preventDefault();
-    const ttl = Number(form.ttl);
-    if (!form.name.trim() || !form.value.trim() || !Number.isFinite(ttl) || ttl < 0) {
-      setError("Name, value, and a valid TTL are required.");
-      return;
-    }
-    if (editing) {
-      updateRecord({
-        id: editing.id,
-        name: form.name,
-        type: form.type,
-        value: form.value,
-        ttl,
-        routingPolicy: form.routingPolicy,
-      });
-    } else {
-      createRecord({
-        zoneId,
-        name: form.name,
-        type: form.type,
-        value: form.value,
-        ttl,
-        routingPolicy: form.routingPolicy,
-      });
-    }
-    setEditorOpen(false);
-    setEditing(null);
-  };
+        r.value.toLowerCase().includes(q),
+    );
+  }, [records, query]);
 
   const onDeleteZone = () => {
     if (!zone) return;
-    if (!window.confirm(`Delete hosted zone ${zone.name}? This cannot be undone (mock).`)) return;
+    if (!window.confirm(`Delete hosted zone ${zone.name}?`)) return;
     deleteZone(zone.id);
     router.push("/hosted-zones");
   };
 
+  const toggleSelect = (id: string) => {
+    setSelected((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
+  };
+
   if (!hydrated) {
     return (
-      <ConsoleLayout breadcrumb="Hosted zones">
+      <ConsoleLayout breadcrumbs={[{ label: "Hosted zones", href: "/hosted-zones" }]}>
         <div className="console-page">
           <p className="console-page__muted">Loading hosted zone…</p>
         </div>
@@ -145,12 +57,9 @@ export default function HostedZoneDetailPage() {
 
   if (!zone) {
     return (
-      <ConsoleLayout breadcrumb="Hosted zones">
+      <ConsoleLayout breadcrumbs={[{ label: "Hosted zones", href: "/hosted-zones" }]}>
         <div className="console-page">
           <h1 className="console-page__title">Hosted zone not found</h1>
-          <p className="console-page__muted">
-            No hosted zone matches <code>{zoneId}</code>.
-          </p>
           <Link href="/hosted-zones" className="console-btn console-btn--normal">
             Back to hosted zones
           </Link>
@@ -160,201 +69,233 @@ export default function HostedZoneDetailPage() {
   }
 
   return (
-    <ConsoleLayout breadcrumb={zone.name}>
-      <div className="console-page">
-        <div className="console-page__heading-row console-page__heading-row--spread">
-          <div>
-            <p className="console-page__eyebrow">
-              <Link href="/hosted-zones" className="console-link">
-                Hosted zones
-              </Link>
-            </p>
+    <ConsoleLayout
+      breadcrumbs={[
+        { label: "Hosted zones", href: "/hosted-zones" },
+        { label: zone.name },
+      ]}
+    >
+      <div className="console-page" style={{ maxWidth: "100%" }}>
+        <div className="console-zone-header">
+          <div className="console-zone-header__title-row">
+            <span className="console-badge">{zone.type}</span>
             <h1 className="console-page__title">{zone.name}</h1>
+            <a href="#" className="console-link">
+              Info
+            </a>
           </div>
-          <ConsoleButton variant="normal" onClick={onDeleteZone}>
-            Delete hosted zone
-          </ConsoleButton>
+          <div className="console-zone-header__actions">
+            <button type="button" className="console-btn console-btn--normal" onClick={onDeleteZone}>
+              Delete zone
+            </button>
+            <button type="button" className="console-btn console-btn--normal">
+              Test record
+            </button>
+            <button type="button" className="console-btn console-btn--normal">
+              Configure query logging
+            </button>
+          </div>
         </div>
 
-        <ConsoleCard title="Hosted zone details">
-          <dl className="console-detail-grid">
-            <div>
-              <dt>Domain name</dt>
-              <dd>{zone.name}</dd>
-            </div>
-            <div>
-              <dt>Hosted zone ID</dt>
-              <dd>
-                <code>{zone.id}</code>
-              </dd>
-            </div>
-            <div>
-              <dt>Type</dt>
-              <dd>{zone.type}</dd>
-            </div>
-            <div>
-              <dt>Description</dt>
-              <dd>{zone.description || "—"}</dd>
-            </div>
-            <div>
-              <dt>Record count</dt>
-              <dd>{zone.recordCount}</dd>
-            </div>
-          </dl>
-        </ConsoleCard>
-
-        <ConsoleCard
-          title="Records"
-          actions={
-            <ConsoleButton variant="primary" onClick={openCreate}>
-              Create record
-            </ConsoleButton>
-          }
-        >
-          <div className="console-toolbar">
-            <ConsoleSearch placeholder="Search records" value={query} onChange={setQuery} />
-            <ConsoleSelect
-              aria-label="Filter by type"
-              value={typeFilter}
-              onChange={(e) => setTypeFilter(e.target.value)}
-              className="console-select--sm"
+        <div className="console-details-panel">
+          <button
+            type="button"
+            className="console-details-panel__header"
+            onClick={() => setDetailsOpen((v) => !v)}
+            aria-expanded={detailsOpen}
+          >
+            <span className="console-details-panel__header-left">
+              <HiChevronDown
+                size={14}
+                style={{ transform: detailsOpen ? undefined : "rotate(-90deg)" }}
+                aria-hidden="true"
+              />
+              Hosted zone details
+            </span>
+            <span
+              className="console-btn console-btn--normal"
+              role="link"
+              onClick={(e) => e.stopPropagation()}
             >
-              <option value="ALL">All record types</option>
-              {RECORD_TYPES.map((t) => (
-                <option key={t} value={t}>
-                  {t}
-                </option>
-              ))}
-            </ConsoleSelect>
-          </div>
+              Edit hosted zone
+            </span>
+          </button>
+          {detailsOpen ? (
+            <div className="console-details-panel__body">
+              <dl className="console-detail-grid">
+                <div>
+                  <dt>Domain name</dt>
+                  <dd>{zone.name}</dd>
+                </div>
+                <div>
+                  <dt>Hosted zone ID</dt>
+                  <dd>
+                    <code>{zone.id}</code>
+                  </dd>
+                </div>
+                <div>
+                  <dt>Type</dt>
+                  <dd>{zone.type}</dd>
+                </div>
+                <div>
+                  <dt>Description</dt>
+                  <dd>{zone.description || "—"}</dd>
+                </div>
+                <div>
+                  <dt>Record count</dt>
+                  <dd>{zone.recordCount}</dd>
+                </div>
+              </dl>
+            </div>
+          ) : null}
+        </div>
 
-          <div className="console-table-wrap">
-            <table className="console-table">
-              <thead>
-                <tr>
-                  <th>Record name</th>
-                  <th>Type</th>
-                  <th>Value</th>
-                  <th>TTL</th>
-                  <th>Routing policy</th>
-                  <th>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filtered.length === 0 ? (
+        <div className="console-tabs" role="tablist">
+          {(
+            [
+              ["records", `Records (${records.length})`],
+              ["recovery", "Accelerated recovery"],
+              ["dnssec", "DNSSEC signing"],
+              ["tags", "Hosted zone tags (0)"],
+            ] as const
+          ).map(([id, label]) => (
+            <button
+              key={id}
+              type="button"
+              role="tab"
+              className={`console-tabs__tab${tab === id ? " is-active" : ""}`}
+              aria-selected={tab === id}
+              onClick={() => setTab(id)}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+
+        {tab === "records" ? (
+          <>
+            <div className="console-records-header">
+              <h2 className="console-records-header__title">
+                Records ({records.length})
+                <a href="#" className="console-link" style={{ fontSize: 13, fontWeight: 600 }}>
+                  Info
+                </a>
+              </h2>
+              <div className="console-hz-toolbar__actions">
+                <button type="button" className="console-icon-btn" aria-label="Refresh">
+                  <FiRefreshCw size={15} />
+                </button>
+                <button
+                  type="button"
+                  className="console-btn console-btn--ghost"
+                  disabled={selected.length === 0}
+                  onClick={() => {
+                    selected.forEach((id) => deleteRecord(id));
+                    setSelected([]);
+                  }}
+                >
+                  Delete record
+                </button>
+                <button type="button" className="console-btn console-btn--normal">
+                  Import zone file
+                </button>
+                <Link
+                  href={`/hosted-zones/${zone.id}/records/new`}
+                  className="console-btn console-btn--primary"
+                >
+                  Create record
+                </Link>
+              </div>
+            </div>
+
+            <div className="console-hz-filter-row">
+              <ConsoleSearch
+                placeholder="Filter records by property or value"
+                value={query}
+                onChange={setQuery}
+              />
+              <div className="console-filter-chips">
+                <button type="button" className="console-filter-chip">
+                  Type
+                </button>
+                <button type="button" className="console-filter-chip">
+                  Routing p…
+                </button>
+                <button type="button" className="console-filter-chip">
+                  Alias
+                </button>
+              </div>
+              <div className="console-table-meta">
+                <button type="button" className="console-icon-btn" aria-label="Previous page">
+                  <HiChevronLeft size={14} />
+                </button>
+                <span>1</span>
+                <button type="button" className="console-icon-btn" aria-label="Next page">
+                  <HiChevronRight size={14} />
+                </button>
+                <button type="button" className="console-icon-btn" aria-label="Table preferences">
+                  <FiSettings size={14} />
+                </button>
+              </div>
+            </div>
+
+            <div className="console-table-wrap">
+              <table className="console-table">
+                <thead>
                   <tr>
-                    <td colSpan={6} className="console-table__empty">
-                      No records to display
-                    </td>
+                    <th>
+                      <input type="checkbox" aria-label="Select all" disabled />
+                    </th>
+                    <th>Record name</th>
+                    <th>Type</th>
+                    <th>Routing policy</th>
+                    <th>Differentiator</th>
+                    <th>Alias</th>
+                    <th>Value/Route traffic to</th>
+                    <th>TTL (seconds)</th>
+                    <th>Health check ID</th>
+                    <th>Evaluate target health</th>
                   </tr>
-                ) : (
-                  filtered.map((record) => (
-                    <tr key={record.id}>
-                      <td>{record.name}</td>
-                      <td>{record.type}</td>
-                      <td className="console-table__value">{record.value}</td>
-                      <td>{record.ttl}</td>
-                      <td>{record.routingPolicy}</td>
-                      <td>
-                        <div className="console-row-actions">
-                          <button
-                            type="button"
-                            className="console-link-btn"
-                            onClick={() => openEdit(record)}
-                          >
-                            Edit
-                          </button>
-                          <button
-                            type="button"
-                            className="console-link-btn"
-                            onClick={() => {
-                              if (window.confirm(`Delete record ${record.name} (${record.type})?`)) {
-                                deleteRecord(record.id);
-                              }
-                            }}
-                          >
-                            Delete
-                          </button>
-                        </div>
+                </thead>
+                <tbody>
+                  {filtered.length === 0 ? (
+                    <tr>
+                      <td colSpan={10} className="console-table__empty">
+                        No records to display
                       </td>
                     </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
-        </ConsoleCard>
-
-        {editorOpen ? (
-          <div className="console-modal" role="dialog" aria-modal="true" aria-labelledby="rec-editor-title">
-            <div className="console-modal__panel">
-              <h2 id="rec-editor-title" className="console-page__title">
-                {editing ? "Edit record" : "Create record"}
-              </h2>
-              <form className="console-form" onSubmit={onSave}>
-                <ConsoleField label="Record name" htmlFor="rec-name">
-                  <ConsoleInput
-                    id="rec-name"
-                    value={form.name}
-                    onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
-                  />
-                </ConsoleField>
-                <ConsoleField label="Record type" htmlFor="rec-type">
-                  <ConsoleSelect
-                    id="rec-type"
-                    value={form.type}
-                    onChange={(e) =>
-                      setForm((f) => ({ ...f, type: e.target.value as DnsRecordType }))
-                    }
-                  >
-                    {RECORD_TYPES.map((t) => (
-                      <option key={t} value={t}>
-                        {t}
-                      </option>
-                    ))}
-                  </ConsoleSelect>
-                </ConsoleField>
-                <ConsoleField label="Value" htmlFor="rec-value">
-                  <ConsoleTextarea
-                    id="rec-value"
-                    rows={3}
-                    value={form.value}
-                    onChange={(e) => setForm((f) => ({ ...f, value: e.target.value }))}
-                  />
-                </ConsoleField>
-                <ConsoleField label="TTL (seconds)" htmlFor="rec-ttl">
-                  <ConsoleInput
-                    id="rec-ttl"
-                    value={form.ttl}
-                    onChange={(e) => setForm((f) => ({ ...f, ttl: e.target.value }))}
-                  />
-                </ConsoleField>
-                <ConsoleField label="Routing policy" htmlFor="rec-policy">
-                  <ConsoleInput
-                    id="rec-policy"
-                    value={form.routingPolicy}
-                    onChange={(e) => setForm((f) => ({ ...f, routingPolicy: e.target.value }))}
-                  />
-                </ConsoleField>
-                {error ? <p className="console-inline-msg console-inline-msg--error">{error}</p> : null}
-                <div className="console-form__actions">
-                  <ConsoleButton
-                    variant="normal"
-                    onClick={() => {
-                      setEditorOpen(false);
-                      setEditing(null);
-                    }}
-                  >
-                    Cancel
-                  </ConsoleButton>
-                  <ConsoleButton type="submit" variant="primary">
-                    {editing ? "Save" : "Create record"}
-                  </ConsoleButton>
-                </div>
-              </form>
+                  ) : (
+                    filtered.map((record) => (
+                      <tr key={record.id}>
+                        <td>
+                          <input
+                            type="checkbox"
+                            checked={selected.includes(record.id)}
+                            onChange={() => toggleSelect(record.id)}
+                            aria-label={`Select ${record.name}`}
+                          />
+                        </td>
+                        <td>{record.name}</td>
+                        <td>{record.type}</td>
+                        <td>{record.routingPolicy}</td>
+                        <td>{record.differentiator ?? "—"}</td>
+                        <td>{record.alias ? "Yes" : "No"}</td>
+                        <td className="console-table__value">{record.value}</td>
+                        <td>{record.ttl.toLocaleString()}</td>
+                        <td>{record.healthCheckId ?? "—"}</td>
+                        <td>{record.evaluateTargetHealth ? "Yes" : "—"}</td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
             </div>
-          </div>
-        ) : null}
+          </>
+        ) : (
+          <p className="console-page__muted">
+            This tab is a visual placeholder in the Route 53 console replica.
+          </p>
+        )}
       </div>
     </ConsoleLayout>
   );

@@ -6,14 +6,22 @@ import { ensureMockSession, getMockSession, type MockSession } from "@/lib/mock/
 import { ConsoleFooter } from "@/components/console/ConsoleFooter";
 import { GlobalNav } from "@/components/console/GlobalNav";
 import { Route53Sidebar } from "@/components/console/Route53Sidebar";
-import { ServiceBreadcrumb } from "@/components/console/ServiceBreadcrumb";
+import {
+  ServiceBreadcrumb,
+  type BreadcrumbItem,
+} from "@/components/console/ServiceBreadcrumb";
 
 type ConsoleLayoutProps = {
   children: ReactNode;
   breadcrumb?: string;
+  breadcrumbs?: BreadcrumbItem[];
 };
 
-export function ConsoleLayout({ children, breadcrumb = "Dashboard" }: ConsoleLayoutProps) {
+export function ConsoleLayout({
+  children,
+  breadcrumb = "Dashboard",
+  breadcrumbs,
+}: ConsoleLayoutProps) {
   const [session, setSession] = useState<MockSession | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [mobileSidebar, setMobileSidebar] = useState(false);
@@ -52,6 +60,7 @@ export function ConsoleLayout({ children, breadcrumb = "Dashboard" }: ConsoleLay
       <GlobalNav session={session} />
       <ServiceBreadcrumb
         current={breadcrumb}
+        items={breadcrumbs}
         sidebarExpanded={sidebarOpen || mobileSidebar}
         onToggleSidebar={toggleSidebar}
       />

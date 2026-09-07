@@ -6,32 +6,12 @@ export type MockHostedZone = {
   type: HostedZoneType;
   recordCount: number;
   description: string;
+  createdBy?: string;
   comment?: string;
 };
 
-export const INITIAL_HOSTED_ZONES: MockHostedZone[] = [
-  {
-    id: "Z0312345678ABCDEFG",
-    name: "example.com",
-    type: "Public",
-    recordCount: 6,
-    description: "Primary production zone",
-  },
-  {
-    id: "Z0398765432HIJKLMN",
-    name: "example.org",
-    type: "Public",
-    recordCount: 4,
-    description: "Marketing site",
-  },
-  {
-    id: "Z0456789012OPQRSTU",
-    name: "myapp.dev",
-    type: "Public",
-    recordCount: 5,
-    description: "Application staging",
-  },
-];
+/** Start empty to match AWS console empty state; create zones via the UI. */
+export const INITIAL_HOSTED_ZONES: MockHostedZone[] = [];
 
 export function generateHostedZoneId(): string {
   const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
