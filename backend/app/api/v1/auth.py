@@ -1,6 +1,7 @@
-from fastapi import APIRouter, HTTPException, Request, Response, status
+from fastapi import APIRouter, Request, Response
 
 from app.api.deps import CurrentUser, DbDep, SettingsDep
+from app.core.rate_limit import login_rate_limiter, parse_rate_limit
 from app.core.security import SESSION_COOKIE_NAME
 from app.schemas.auth import LoginRequest, MessageOut, UserOut
 from app.services import auth_service
@@ -39,21 +40,24 @@ def _clear_session_cookie(response: Response, *, secure: bool) -> None:
 @router.post("/login", response_model=UserOut)
 def login(
     payload: LoginRequest,
+    request: Request,
     response: Response,
     db: DbDep,
     settings: SettingsDep,
 ) -> UserOut:
-    try:
-        user, auth_session = auth_service.login(
-            db,
-            email=str(payload.email),
-            password=payload.password,
-        )
-    except auth_service.AuthError as exc:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail=str(exc),
-        ) from exc
+    max_calls, period_seconds = parse_rate_limit(settings.login_rate_limit)
+    client_host = request.client.host if request.client else "unknown"
+    login_rate_limiter.hit(
+        f"login:{client_host}",
+        max_calls=max_calls,
+        period_seconds=period_seconds,
+    )
+
+    user, auth_session = auth_service.login(
+        db,
+        email=str(payload.email),
+        password=payload.password,
+    )
 
     _set_session_cookie(
         response,

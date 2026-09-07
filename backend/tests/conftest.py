@@ -7,11 +7,19 @@ from sqlalchemy.orm import Session, sessionmaker
 from sqlalchemy.pool import StaticPool
 
 from app.core.config import get_settings
+from app.core.rate_limit import login_rate_limiter
 from app.core.security import hash_password
 from app.db.base import Base
 from app.db.session import get_db
 from app.main import app
 from app.models.user import User
+
+
+@pytest.fixture(autouse=True)
+def _reset_login_rate_limiter() -> Generator[None, None, None]:
+    login_rate_limiter.reset()
+    yield
+    login_rate_limiter.reset()
 
 
 @pytest.fixture()

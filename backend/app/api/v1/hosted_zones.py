@@ -1,6 +1,6 @@
 from typing import Literal
 
-from fastapi import APIRouter, HTTPException, Query, Response, status
+from fastapi import APIRouter, Query, Response, status
 
 from app.api.deps import CurrentUser, DbDep
 from app.schemas.hosted_zone import (
@@ -49,13 +49,7 @@ def create_hosted_zone(
     db: DbDep,
     current_user: CurrentUser,
 ) -> HostedZoneOut:
-    try:
-        zone = hosted_zone_service.create(db, current_user, payload)
-    except hosted_zone_service.HostedZoneConflictError as exc:
-        raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT,
-            detail=str(exc),
-        ) from exc
+    zone = hosted_zone_service.create(db, current_user, payload)
     return HostedZoneOut.model_validate(zone)
 
 
@@ -65,13 +59,7 @@ def get_hosted_zone(
     db: DbDep,
     current_user: CurrentUser,
 ) -> HostedZoneOut:
-    try:
-        zone = hosted_zone_service.get_by_id(db, current_user, zone_id)
-    except hosted_zone_service.HostedZoneNotFoundError as exc:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=str(exc),
-        ) from exc
+    zone = hosted_zone_service.get_by_id(db, current_user, zone_id)
     return HostedZoneOut.model_validate(zone)
 
 
@@ -82,13 +70,7 @@ def update_hosted_zone(
     db: DbDep,
     current_user: CurrentUser,
 ) -> HostedZoneOut:
-    try:
-        zone = hosted_zone_service.update(db, current_user, zone_id, payload)
-    except hosted_zone_service.HostedZoneNotFoundError as exc:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=str(exc),
-        ) from exc
+    zone = hosted_zone_service.update(db, current_user, zone_id, payload)
     return HostedZoneOut.model_validate(zone)
 
 
@@ -98,11 +80,5 @@ def delete_hosted_zone(
     db: DbDep,
     current_user: CurrentUser,
 ) -> Response:
-    try:
-        hosted_zone_service.delete(db, current_user, zone_id)
-    except hosted_zone_service.HostedZoneNotFoundError as exc:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=str(exc),
-        ) from exc
+    hosted_zone_service.delete(db, current_user, zone_id)
     return Response(status_code=status.HTTP_204_NO_CONTENT)

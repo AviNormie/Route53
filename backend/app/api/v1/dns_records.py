@@ -1,6 +1,6 @@
 from typing import Annotated, Literal
 
-from fastapi import APIRouter, HTTPException, Query, Response, status
+from fastapi import APIRouter, Query, Response, status
 
 from app.api.deps import CurrentUser, DbDep
 from app.schemas.dns_record import (
@@ -9,7 +9,7 @@ from app.schemas.dns_record import (
     DnsRecordOut,
     DnsRecordUpdate,
 )
-from app.services import dns_record_service, hosted_zone_service
+from app.services import dns_record_service
 
 zone_records_router = APIRouter(
     prefix="/hosted-zones/{zone_id}/records",
@@ -31,22 +31,15 @@ def list_dns_records(
     page: int = Query(default=1, ge=1),
     page_size: int = Query(default=20, ge=1, le=100),
 ) -> DnsRecordListOut:
-    try:
-        items, total = dns_record_service.list_paginated(
-            db,
-            current_user,
-            zone_id,
-            search=search,
-            type_filter=record_type,
-            page=page,
-            page_size=page_size,
-        )
-    except hosted_zone_service.HostedZoneNotFoundError as exc:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=str(exc),
-        ) from exc
-
+    items, total = dns_record_service.list_paginated(
+        db,
+        current_user,
+        zone_id,
+        search=search,
+        type_filter=record_type,
+        page=page,
+        page_size=page_size,
+    )
     return DnsRecordListOut(
         items=[DnsRecordOut.model_validate(item) for item in items],
         total=total,
@@ -66,13 +59,7 @@ def create_dns_record(
     db: DbDep,
     current_user: CurrentUser,
 ) -> DnsRecordOut:
-    try:
-        record = dns_record_service.create(db, current_user, zone_id, payload)
-    except hosted_zone_service.HostedZoneNotFoundError as exc:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=str(exc),
-        ) from exc
+    record = dns_record_service.create(db, current_user, zone_id, payload)
     return DnsRecordOut.model_validate(record)
 
 
@@ -82,13 +69,7 @@ def get_dns_record(
     db: DbDep,
     current_user: CurrentUser,
 ) -> DnsRecordOut:
-    try:
-        record = dns_record_service.get_by_id(db, current_user, record_id)
-    except dns_record_service.DnsRecordNotFoundError as exc:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=str(exc),
-        ) from exc
+    record = dns_record_service.get_by_id(db, current_user, record_id)
     return DnsRecordOut.model_validate(record)
 
 
@@ -99,13 +80,7 @@ def update_dns_record(
     db: DbDep,
     current_user: CurrentUser,
 ) -> DnsRecordOut:
-    try:
-        record = dns_record_service.update(db, current_user, record_id, payload)
-    except dns_record_service.DnsRecordNotFoundError as exc:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=str(exc),
-        ) from exc
+    record = dns_record_service.update(db, current_user, record_id, payload)
     return DnsRecordOut.model_validate(record)
 
 
@@ -115,11 +90,5 @@ def delete_dns_record(
     db: DbDep,
     current_user: CurrentUser,
 ) -> Response:
-    try:
-        dns_record_service.delete(db, current_user, record_id)
-    except dns_record_service.DnsRecordNotFoundError as exc:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=str(exc),
-        ) from exc
+    dns_record_service.delete(db, current_user, record_id)
     return Response(status_code=status.HTTP_204_NO_CONTENT)

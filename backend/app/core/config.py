@@ -1,7 +1,7 @@
 from functools import lru_cache
-from typing import Annotated, Literal
+from typing import Annotated, Literal, Self
 
-from pydantic import Field, field_validator
+from pydantic import Field, field_validator, model_validator
 from pydantic_settings import BaseSettings, NoDecode, SettingsConfigDict
 
 
@@ -43,6 +43,10 @@ class Settings(BaseSettings):
         default="DemoPass123!",
         alias="DEMO_USER_PASSWORD",
     )
+    login_rate_limit: str = Field(
+        default="5/minute",
+        alias="LOGIN_RATE_LIMIT",
+    )
 
     @field_validator("cors_origins", mode="before")
     @classmethod
@@ -66,6 +70,16 @@ class Settings(BaseSettings):
                 raise ValueError("CORS_ORIGINS JSON must be a list")
             return [origin.strip() for origin in raw.split(",") if origin.strip()]
         raise TypeError("CORS_ORIGINS must be a string or list")
+
+    @model_validator(mode="after")
+    def validate_prod_security(self) -> Self:
+        if self.environment != "prod":
+            return self
+        if not self.cors_origins:
+            raise ValueError("CORS_ORIGINS must be set when ENVIRONMENT=prod")
+        if any(origin.strip() == "*" for origin in self.cors_origins):
+            raise ValueError("CORS_ORIGINS must not include '*' when ENVIRONMENT=prod")
+        return self
 
 
 @lru_cache
