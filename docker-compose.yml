@@ -5,8 +5,11 @@ services:
       dockerfile: Dockerfile
     ports:
       - "8000:8000"
+    env_file:
+      - ./backend/.env
     environment:
       DATABASE_URL: sqlite:///./data/route53.db
+      ENVIRONMENT: prod
     volumes:
       - ./backend/data:/app/data
 

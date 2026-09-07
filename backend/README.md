@@ -1,28 +1,44 @@
 # Route 53 Clone Backend
 
-FastAPI API for the Route 53 clone.
+FastAPI backend scaffolding for the Route 53 clone.
+
+## Stack
+
+- Python 3.11+
+- FastAPI
+- SQLAlchemy 2.x + Alembic
+- Poetry
+- SQLite (default)
 
 ## Setup
 
 ```bash
-python -m venv .venv
-source .venv/bin/activate
-pip install -r requirements.txt
+cd backend
+poetry install
 cp .env.example .env
 ```
 
 ## Run
 
 ```bash
-uvicorn app.main:app --reload --port 8000
+poetry run uvicorn app.main:app --reload --port 8000
 ```
 
 ## Tests
 
 ```bash
-pytest
+poetry run pytest
 ```
 
-## Environment
+## Migrations
 
-See `.env.example` for `DATABASE_URL`.
+```bash
+poetry run alembic revision --autogenerate -m "message"
+poetry run alembic upgrade head
+```
+
+## Docker
+
+```bash
+docker compose up --build
+```
