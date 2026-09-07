@@ -15,6 +15,7 @@ import {
   FiChevronLeft,
   FiChevronRight,
   FiChevronUp,
+  FiMinusCircle,
   FiRefreshCw,
   FiSearch,
   FiSettings,
@@ -113,6 +114,8 @@ export function HostedZoneDetailView({ zoneId }: { zoneId: string }) {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [activeTab, setActiveTab] = useState<TabId>("records");
   const [detailsOpen, setDetailsOpen] = useState(false);
+  const [acceleratedEnabled, setAcceleratedEnabled] = useState(false);
+  const [dnssecEnabled, setDnssecEnabled] = useState(false);
   const [helpOpen, setHelpOpen] = useState(false);
   const [panelCollapsed, setPanelCollapsed] = useState(false);
   const [panelMode, setPanelMode] = useState<RecordPanelMode>("details");
@@ -363,7 +366,7 @@ export function HostedZoneDetailView({ zoneId }: { zoneId: string }) {
                 </span>
                 <div className="hz-flash__body">
                   <p className="hz-flash__title">{domain} was successfully updated.</p>
-                  <p>Hosted zone details were successfully updated.</p>
+                  <p className="hz-flash__text">Hosted zone details were successfully updated.</p>
                 </div>
                 <button
                   type="button"
@@ -381,11 +384,13 @@ export function HostedZoneDetailView({ zoneId }: { zoneId: string }) {
                 <span className="hz-flash__icon">
                   <FiCheck size={14} strokeWidth={3} />
                 </span>
-                <p className="hz-flash__body">
-                  <span className="hz-flash__title">{domain}</span> was successfully
-                  created. Now you can create records in the hosted zone to specify how you
-                  want Route 53 to route traffic for your domain.
-                </p>
+                <div className="hz-flash__body">
+                  <p className="hz-flash__title">{domain} was successfully created.</p>
+                  <p className="hz-flash__text">
+                    Now you can create records in the hosted zone to specify how you want Route
+                    53 to route traffic for your domain.
+                  </p>
+                </div>
                 <button
                   type="button"
                   aria-label="Dismiss"
@@ -665,9 +670,115 @@ export function HostedZoneDetailView({ zoneId }: { zoneId: string }) {
                   </table>
                 </div>
               </div>
-            ) : (
-              <div className="hz-tab-placeholder">{tabLabels[activeTab]} is not available in this demo.</div>
-            )}
+            ) : activeTab === "accelerated" ? (
+              <section className="hz-feature-panel" aria-labelledby="hz-accelerated-heading">
+                <div className="hz-feature-panel__header">
+                  <div className="hz-feature-panel__title-row">
+                    <h2 id="hz-accelerated-heading">Accelerated recovery</h2>
+                    <InfoLink onClick={() => setHelpOpen(true)} />
+                  </div>
+                  <ConsoleButton
+                    variant="normal"
+                    disabled={busy || acceleratedEnabled}
+                    onClick={() => setAcceleratedEnabled(true)}
+                  >
+                    Enable
+                  </ConsoleButton>
+                </div>
+                <p className="hz-feature-panel__copy">
+                  Enable the accelerated recovery option to ensure that you can continue to make
+                  changes to your public DNS records after an impairment to US East (N.
+                  Virginia).
+                </p>
+                <dl className="hz-feature-status">
+                  <dt>Status</dt>
+                  <dd>
+                    {acceleratedEnabled ? (
+                      <>
+                        <FiCheck className="hz-feature-status__icon is-enabled" size={16} aria-hidden />
+                        <span>Enabled</span>
+                      </>
+                    ) : (
+                      <>
+                        <FiMinusCircle
+                          className="hz-feature-status__icon"
+                          size={16}
+                          aria-hidden
+                        />
+                        <span>Disabled</span>
+                      </>
+                    )}
+                  </dd>
+                </dl>
+              </section>
+            ) : activeTab === "dnssec" ? (
+              <section className="hz-feature-panel" aria-labelledby="hz-dnssec-heading">
+                <div className="hz-feature-panel__header">
+                  <div className="hz-feature-panel__title-row">
+                    <h2 id="hz-dnssec-heading">DNSSEC signing</h2>
+                    <InfoLink onClick={() => setHelpOpen(true)} />
+                  </div>
+                  <ConsoleButton
+                    variant="normal"
+                    disabled={busy || dnssecEnabled}
+                    onClick={() => setDnssecEnabled(true)}
+                  >
+                    Enable DNSSEC signing
+                  </ConsoleButton>
+                </div>
+                <p className="hz-feature-panel__copy">
+                  DNSSEC signing lets you protect your domain against DNS spoofing and
+                  man-in-the-middle attacks by cryptographically signing your DNS records.
+                </p>
+                <dl className="hz-feature-status">
+                  <dt>DNSSEC signing</dt>
+                  <dd>
+                    {dnssecEnabled ? (
+                      <>
+                        <FiCheck className="hz-feature-status__icon is-enabled" size={16} aria-hidden />
+                        <span>Enabled</span>
+                      </>
+                    ) : (
+                      <>
+                        <FiMinusCircle
+                          className="hz-feature-status__icon"
+                          size={16}
+                          aria-hidden
+                        />
+                        <span>Disabled</span>
+                      </>
+                    )}
+                  </dd>
+                </dl>
+                {dnssecEnabled ? (
+                  <dl className="hz-feature-status">
+                    <dt>Key-signing keys (KSKs)</dt>
+                    <dd>
+                      <span>1 active KSK (demo)</span>
+                    </dd>
+                  </dl>
+                ) : (
+                  <p className="hz-feature-panel__hint">
+                    After you enable signing, create a key-signing key (KSK) and establish a chain
+                    of trust with your domain registrar.
+                  </p>
+                )}
+              </section>
+            ) : activeTab === "tags" ? (
+              <section className="hz-feature-panel" aria-labelledby="hz-tags-heading">
+                <div className="hz-feature-panel__header">
+                  <div className="hz-feature-panel__title-row">
+                    <h2 id="hz-tags-heading">Tags</h2>
+                    <InfoLink onClick={() => setHelpOpen(true)} />
+                  </div>
+                  <ConsoleButton variant="normal">Manage tags</ConsoleButton>
+                </div>
+                <p className="hz-feature-panel__copy">
+                  Apply tags to hosted zones to help organize and identify your resources.
+                </p>
+                <p className="hz-feature-panel__empty">No tags associated with the resource.</p>
+              </section>
+            ) : null}
           </div>
 
           {showRecordPanel && !panelCollapsed ? (
