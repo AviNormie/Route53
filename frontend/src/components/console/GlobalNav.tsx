@@ -17,6 +17,8 @@ import type { MockSession } from "@/lib/mock/session";
 
 type GlobalNavProps = {
   session: MockSession | null;
+  amazonQOpen?: boolean;
+  onToggleAmazonQ?: () => void;
 };
 
 const ACCOUNT_ID = "497535504622";
@@ -203,7 +205,7 @@ function AccountMenu({
   );
 }
 
-export function GlobalNav({ session }: GlobalNavProps) {
+export function GlobalNav({ session, amazonQOpen = false, onToggleAmazonQ }: GlobalNavProps) {
   const router = useRouter();
   const [menuOpen, setMenuOpen] = useState(false);
   const accountRef = useRef<HTMLDivElement>(null);
@@ -251,7 +253,13 @@ export function GlobalNav({ session }: GlobalNavProps) {
             <FaAws aria-hidden="true" className="h-8 w-8"/>
           </Link>
           <span className="console-global-nav__vsep" aria-hidden="true" />
-          <button type="button" className="console-global-nav__icon-btn" aria-label="Amazon Q">
+          <button
+            type="button"
+            className={`console-global-nav__icon-btn${amazonQOpen ? " is-active" : ""}`}
+            aria-label="Amazon Q"
+            aria-pressed={amazonQOpen}
+            onClick={onToggleAmazonQ}
+          >
             <AmazonQIcon />
           </button>
           <span className="console-global-nav__vsep" aria-hidden="true" />

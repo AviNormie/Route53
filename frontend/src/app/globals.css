@@ -2083,11 +2083,14 @@ img {
   display: inline-flex;
   align-items: center;
   padding: 0.1rem 0.45rem;
-  border-radius: 4px;
-  background: rgb(66 180 255 / 0.15);
-  color: var(--console-link);
+  border-start-start-radius: 4px;
+  border-start-end-radius: 4px;
+  border-end-start-radius: 4px;
+  border-end-end-radius: 4px;
+  background: rgb(0, 108, 224);
+  color: #fff;
   font-size: 12px;
-  font-weight: 700;
+  font-weight: 400;
 }
 
 .console-zone-header {
@@ -2492,6 +2495,236 @@ img {
   font-family: var(--console-font);
   font-size: 14px;
   line-height: 1.4;
+}
+
+.console-shell__below-nav {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  min-width: 0;
+}
+
+.console-shell__primary {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+}
+
+.console-amazon-q {
+  display: flex;
+  flex-direction: column;
+  flex: 0 0 min(420px, 42vw);
+  width: min(420px, 42vw);
+  max-width: 420px;
+  min-height: 0;
+  border-right: 1px solid rgb(66, 180, 255);
+  background: #12151c;
+  animation: console-amazon-q-in 0.22s ease-out;
+  z-index: 45;
+}
+
+@keyframes console-amazon-q-in {
+  from {
+    transform: translateX(-100%);
+    opacity: 0.6;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+.console-amazon-q__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  height: 44px;
+  padding: 0 0.65rem 0 1rem;
+  border-bottom: 1px solid var(--console-border);
+  flex-shrink: 0;
+}
+
+.console-amazon-q__title {
+  margin: 0;
+  color: var(--console-text-strong);
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.console-amazon-q__header-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.1rem;
+}
+
+.console-amazon-q__icon-btn {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--console-text-muted);
+  cursor: pointer;
+}
+
+.console-amazon-q__icon-btn:hover {
+  background: rgb(255 255 255 / 0.06);
+  color: #fff;
+}
+
+.console-amazon-q__body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 1.5rem 1.1rem 1rem;
+}
+
+.console-amazon-q__hero {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1.35rem;
+  text-align: center;
+}
+
+.console-amazon-q__heading {
+  margin: 0;
+  color: var(--console-text-strong);
+  font-size: 22px;
+  font-weight: 700;
+  line-height: 1.25;
+}
+
+.console-amazon-q__composer {
+  position: relative;
+  margin-bottom: 1.15rem;
+}
+
+.console-amazon-q__input {
+  width: 100%;
+  min-height: 110px;
+  padding: 0.75rem 2.5rem 1.75rem 0.75rem;
+  border: 1px solid var(--console-border-strong);
+  border-radius: 10px;
+  background: #0f141a;
+  color: var(--console-text-strong);
+  resize: vertical;
+  outline: none;
+  font: inherit;
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.console-amazon-q__input::placeholder {
+  color: var(--console-text-muted);
+}
+
+.console-amazon-q__input:focus {
+  border-color: rgb(66, 180, 255);
+  box-shadow: 0 0 0 1px rgb(66, 180, 255);
+}
+
+.console-amazon-q__send {
+  position: absolute;
+  right: 0.55rem;
+  bottom: 1.85rem;
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--console-text-muted);
+  cursor: pointer;
+}
+
+.console-amazon-q__send:hover {
+  color: rgb(66, 180, 255);
+}
+
+.console-amazon-q__limit {
+  margin: 0.35rem 0 0;
+  color: var(--console-text-muted);
+  font-size: 11px;
+}
+
+.console-amazon-q__suggestions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+
+.console-amazon-q__card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.35rem;
+  width: 100%;
+  padding: 0.8rem 0.85rem;
+  border: 1px solid var(--console-border);
+  border-radius: 10px;
+  background: rgb(255 255 255 / 0.03);
+  color: var(--console-text);
+  text-align: left;
+  cursor: pointer;
+}
+
+.console-amazon-q__card:hover {
+  border-color: var(--console-border-strong);
+  background: rgb(255 255 255 / 0.05);
+}
+
+.console-amazon-q__card strong {
+  color: var(--console-text-strong);
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.35;
+}
+
+.console-amazon-q__card span {
+  color: var(--console-text-muted);
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.console-amazon-q__card em {
+  margin-top: 0.2rem;
+  color: #e879f9;
+  font-size: 11px;
+  font-style: normal;
+  font-weight: 700;
+}
+
+.console-amazon-q__footer {
+  padding: 0.75rem 1rem 1rem;
+  border-top: 1px solid var(--console-border);
+  color: var(--console-text-muted);
+  font-size: 12px;
+  flex-shrink: 0;
+}
+
+.console-global-nav__icon-btn.is-active {
+  background: rgb(255 255 255 / 0.1);
+  color: #fff;
+}
+
+@media (max-width: 900px) {
+  .console-amazon-q {
+    position: fixed;
+    top: calc(var(--console-utility-height) + var(--console-nav-height));
+    left: 0;
+    bottom: 0;
+    width: min(100vw, 420px);
+    max-width: 100vw;
+    flex-basis: auto;
+    box-shadow: 8px 0 28px rgb(0 0 0 / 0.45);
+  }
 }
 
 .console-global-nav {
@@ -3016,7 +3249,7 @@ img {
   justify-content: space-between;
   height: 40px;
   padding: 0 0.75rem 0 1rem;
-  border-bottom: 1px solid var(--console-border);
+  border-bottom: 0;
 }
 
 .console-sidebar__title {
@@ -3336,14 +3569,29 @@ img {
 }
 
 .console-btn--normal {
-  border-color: var(--console-accent);
-  background: transparent;
-  color: var(--console-accent);
-  border-radius: var(--console-radius-pill);
+  border-block-start-color: rgb(66, 180, 255);
+  border-block-start-style: solid;
+  border-block-start-width: 2px;
+  border-block-end-color: rgb(66, 180, 255);
+  border-block-end-style: solid;
+  border-block-end-width: 2px;
+  border-inline-start: 2px solid rgb(66, 180, 255);
+  border-inline-end: 2px solid rgb(66, 180, 255);
+  border-bottom-color: rgb(66, 180, 255);
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-start-start-radius: 20px;
+  border-start-end-radius: 20px;
+  border-end-start-radius: 20px;
+  border-end-end-radius: 20px;
+  background: rgb(22, 29, 38);
+  color: rgb(66, 180, 255);
+  font-size: 14px;
+  font-weight: 700;
 }
 
 .console-btn--normal:hover {
-  background: rgb(83 159 229 / 0.12);
+  background: rgb(28, 36, 48);
 }
 
 .console-btn--primary {

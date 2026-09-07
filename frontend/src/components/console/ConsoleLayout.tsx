@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState, type ReactNode } from "react";
+import { AmazonQPanel } from "@/components/console/AmazonQPanel";
 import { useConsoleAuth } from "@/components/console/ConsoleAuthProvider";
 import { ConsoleFooter } from "@/components/console/ConsoleFooter";
 import { GlobalNav } from "@/components/console/GlobalNav";
@@ -25,6 +26,7 @@ export function ConsoleLayout({
   const { session, error: authError } = useConsoleAuth();
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [mobileSidebar, setMobileSidebar] = useState(false);
+  const [amazonQOpen, setAmazonQOpen] = useState(false);
 
   useEffect(() => {
     const mq = window.matchMedia("(max-width: 1023px)");
@@ -53,47 +55,56 @@ export function ConsoleLayout({
   const closeMobile = () => setMobileSidebar(false);
 
   return (
-    <div className="console-shell">
-      <GlobalNav session={session} />
-      <ServiceBreadcrumb
-        current={breadcrumb}
-        items={breadcrumbs}
-        sidebarExpanded={sidebarOpen || mobileSidebar}
-        onToggleSidebar={toggleSidebar}
+    <div className={`console-shell${amazonQOpen ? " is-amazon-q-open" : ""}`}>
+      <GlobalNav
+        session={session}
+        amazonQOpen={amazonQOpen}
+        onToggleAmazonQ={() => setAmazonQOpen((v) => !v)}
       />
-      <div className="console-body">
-        {(sidebarOpen || mobileSidebar) && (
-          <Route53Sidebar
-            collapsed={!sidebarOpen && !mobileSidebar}
-            mobileOpen={mobileSidebar}
-            onCollapse={() => {
-              setSidebarOpen(false);
-              setMobileSidebar(false);
-            }}
-            onNavigate={closeMobile}
+      <div className="console-shell__below-nav">
+        <AmazonQPanel open={amazonQOpen} onClose={() => setAmazonQOpen(false)} />
+        <div className="console-shell__primary">
+          <ServiceBreadcrumb
+            current={breadcrumb}
+            items={breadcrumbs}
+            sidebarExpanded={sidebarOpen || mobileSidebar}
+            onToggleSidebar={toggleSidebar}
           />
-        )}
-        {mobileSidebar ? (
-          <button
-            type="button"
-            className="console-sidebar-backdrop"
-            aria-label="Close navigation"
-            onClick={closeMobile}
-          />
-        ) : null}
-        <div className="console-main-column">
-          <main className="console-main">
-            {authError ? (
-              <div className="console-auth-banner" role="status">
-                <span>{authError}</span>
-                <Link href="/login" className="console-link">
-                  Sign in
-                </Link>
-              </div>
+          <div className="console-body">
+            {(sidebarOpen || mobileSidebar) && (
+              <Route53Sidebar
+                collapsed={!sidebarOpen && !mobileSidebar}
+                mobileOpen={mobileSidebar}
+                onCollapse={() => {
+                  setSidebarOpen(false);
+                  setMobileSidebar(false);
+                }}
+                onNavigate={closeMobile}
+              />
+            )}
+            {mobileSidebar ? (
+              <button
+                type="button"
+                className="console-sidebar-backdrop"
+                aria-label="Close navigation"
+                onClick={closeMobile}
+              />
             ) : null}
-            {children}
-          </main>
-          <ConsoleFooter />
+            <div className="console-main-column">
+              <main className="console-main">
+                {authError ? (
+                  <div className="console-auth-banner" role="status">
+                    <span>{authError}</span>
+                    <Link href="/login" className="console-link">
+                      Sign in
+                    </Link>
+                  </div>
+                ) : null}
+                {children}
+              </main>
+              <ConsoleFooter />
+            </div>
+          </div>
         </div>
       </div>
       <Link href="/" className="sr-only">
