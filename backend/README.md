@@ -8,7 +8,7 @@ FastAPI backend scaffolding for the Route 53 clone.
 - FastAPI
 - SQLAlchemy 2.x + Alembic
 - Poetry
-- SQLite (default)
+- SQLite (local default) or MySQL (e.g. Aiven)
 
 ## Setup
 
@@ -16,6 +16,23 @@ FastAPI backend scaffolding for the Route 53 clone.
 cd backend
 poetry install
 cp .env.example .env
+```
+
+Set `DATABASE_URL` in `.env`:
+
+```bash
+# Local SQLite
+DATABASE_URL=sqlite:///./data/route53.db
+
+# Aiven MySQL (ssl-mode=REQUIRED is supported)
+DATABASE_URL=mysql://USER:PASSWORD@HOST:PORT/defaultdb?ssl-mode=REQUIRED
+```
+
+Then migrate and seed:
+
+```bash
+poetry run alembic upgrade head
+poetry run python -m app.db.seed
 ```
 
 ## Run
@@ -42,7 +59,6 @@ poetry run alembic upgrade head
 ```bash
 docker compose up --build
 ```
-
 
 ## Auth
 

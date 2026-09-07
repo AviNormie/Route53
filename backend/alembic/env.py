@@ -5,16 +5,16 @@ Configured against `app.db.base.Base` and `DATABASE_URL` from settings.
 
 from logging.config import fileConfig
 
-from alembic import context
-from sqlalchemy import engine_from_config, pool
-
-from app.core.config import settings
-from app.db.base import Base
-
 # Import models package so model metadata is registered on Base when models exist.
 import app.models  # noqa: F401
+from alembic import context
+from app.core.config import settings
+from app.db.base import Base
+from app.db.session import engine
 
 config = context.config
+# Keep alembic.ini in sync for offline tooling, but online uses the app engine
+# (MySQL SSL / mysql+pymysql normalization).
 config.set_main_option("sqlalchemy.url", settings.database_url)
 
 if config.config_file_name is not None:
@@ -38,13 +38,7 @@ def run_migrations_offline() -> None:
 
 
 def run_migrations_online() -> None:
-    connectable = engine_from_config(
-        config.get_section(config.config_ini_section, {}),
-        prefix="sqlalchemy.",
-        poolclass=pool.NullPool,
-    )
-
-    with connectable.connect() as connection:
+    with engine.connect() as connection:
         context.configure(
             connection=connection,
             target_metadata=target_metadata,

@@ -47,6 +47,11 @@ class Settings(BaseSettings):
         default="5/minute",
         alias="LOGIN_RATE_LIMIT",
     )
+    mysql_ssl_ca: str | None = Field(
+        default=None,
+        alias="MYSQL_SSL_CA",
+        description="Optional path to Aiven CA cert for VERIFY_CA / VERIFY_IDENTITY",
+    )
 
     @field_validator("cors_origins", mode="before")
     @classmethod

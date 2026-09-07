@@ -2,17 +2,18 @@ from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 from pathlib import Path
 
-from fastapi import FastAPI, Response, status
+from fastapi import Depends, FastAPI, Response, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from sqlalchemy import text
+from sqlalchemy.orm import Session
 
 from app.api.v1.router import api_router
 from app.core.config import settings
 from app.core.exceptions import register_exception_handlers
 from app.core.logging import configure_logging
 from app.core.middleware import RequestIdMiddleware
-from app.db.session import engine
+from app.db.session import get_db
 
 
 def _ensure_sqlite_data_dir() -> None:
@@ -61,11 +62,10 @@ app.include_router(api_router, prefix="/api/v1")
 
 
 @app.get("/health", tags=["health"])
-def health() -> Response:
+def health(db: Session = Depends(get_db)) -> Response:
     """Liveness/readiness probe — verifies DB connectivity."""
     try:
-        with engine.connect() as connection:
-            connection.execute(text("SELECT 1"))
+        db.execute(text("SELECT 1"))
     except Exception:
         return JSONResponse(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,

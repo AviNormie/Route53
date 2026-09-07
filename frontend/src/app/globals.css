@@ -1822,6 +1822,13 @@ img {
   min-width: 0;
 }
 
+.console-global-nav__q-icon {
+  display: block;
+  width: 24px;
+  height: 24px;
+  flex-shrink: 0;
+}
+
 .console-global-nav__cloudshell {
   display: grid;
   place-items: center;

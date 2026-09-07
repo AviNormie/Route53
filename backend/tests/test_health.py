@@ -2,20 +2,17 @@ from fastapi.testclient import TestClient
 
 from app.core.config import settings
 from app.core.rate_limit import login_rate_limiter
-from app.main import app
 from app.models.user import User
 
-client = TestClient(app)
 
-
-def test_health() -> None:
+def test_health(client: TestClient) -> None:
     response = client.get("/health")
     assert response.status_code == 200
     assert response.json() == {"status": "ok"}
     assert "x-request-id" in response.headers
 
 
-def test_request_id_echo() -> None:
+def test_request_id_echo(client: TestClient) -> None:
     response = client.get("/health", headers={"X-Request-ID": "test-req-123"})
     assert response.status_code == 200
     assert response.headers["x-request-id"] == "test-req-123"
