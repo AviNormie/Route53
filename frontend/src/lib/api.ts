@@ -239,6 +239,34 @@ export async function createDnsRecord(
   });
 }
 
+export async function updateDnsRecord(
+  recordId: string,
+  input: CreateDnsRecordInput,
+): Promise<DnsRecord> {
+  const body: Record<string, unknown> = {
+    name: input.name,
+    type: input.type,
+    ttl: input.ttl,
+    value: input.value,
+  };
+  if (input.type === "MX" || input.type === "SRV") {
+    body.priority = input.priority ?? 10;
+  }
+  if (input.type === "SRV") {
+    body.weight = input.weight ?? 0;
+    body.port = input.port ?? 0;
+  }
+  if (input.type === "CAA") {
+    body.caa_flag = input.caa_flag ?? 0;
+    body.caa_tag = input.caa_tag ?? "issue";
+  }
+
+  return apiFetch<DnsRecord>(`/api/v1/records/${encodeURIComponent(recordId)}`, {
+    method: "PUT",
+    body: JSON.stringify(body),
+  });
+}
+
 export async function deleteDnsRecord(recordId: string): Promise<void> {
   await apiFetch<void>(`/api/v1/records/${encodeURIComponent(recordId)}`, {
     method: "DELETE",
