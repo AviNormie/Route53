@@ -548,6 +548,28 @@ img {
   }
 }
 
+.api-docs__code {
+  padding: 0.1rem 0.35rem;
+  border-radius: 0.25rem;
+  background: var(--aws-muted-bg);
+  border: 1px solid var(--aws-border);
+  font-size: 0.875em;
+}
+
+.api-docs__frame-wrap {
+  border-top: 1px solid var(--aws-border);
+  background: var(--aws-surface);
+}
+
+.api-docs__frame {
+  display: block;
+  width: 100%;
+  min-height: min(85vh, 56rem);
+  height: 85vh;
+  border: 0;
+  background: var(--aws-surface);
+}
+
 .feedback-gradient {
   background: linear-gradient(90deg, #b8ecf8 0%, #c9dffd 48%, #dcc8f5 100%);
 }

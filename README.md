@@ -7,10 +7,10 @@ Full-stack DNS management console inspired by [Amazon Route 53](https://route53-
 | | URL |
 |--|-----|
 | **App (Vercel)** | [https://route53-ten.vercel.app/](https://route53-ten.vercel.app/) |
+| **API docs (on app)** | [https://route53-ten.vercel.app/docs](https://route53-ten.vercel.app/docs) |
 | **API (Render)** | [https://route53-f23x.onrender.com](https://route53-f23x.onrender.com) |
-| **API docs (Scalar)** | [https://route53-f23x.onrender.com/scalar](https://route53-f23x.onrender.com/scalar) |
-| **Swagger UI** | [https://route53-f23x.onrender.com/docs](https://route53-f23x.onrender.com/docs) |
-| **ReDoc** | [https://route53-f23x.onrender.com/redoc](https://route53-f23x.onrender.com/redoc) |
+| **Scalar (proxied)** | [https://route53-ten.vercel.app/scalar](https://route53-ten.vercel.app/scalar) |
+| **Swagger (proxied)** | [https://route53-ten.vercel.app/swagger](https://route53-ten.vercel.app/swagger) |
 | **Health** | [https://route53-f23x.onrender.com/health](https://route53-f23x.onrender.com/health) |
 
 **Demo login:** `demo@example.com` / `DemoPass123!`
@@ -138,12 +138,15 @@ Browser ──► Next.js (Vercel) ── /api/v1/* proxy ──► FastAPI (Ren
 
 Interactive reference is generated from the OpenAPI schema:
 
-| UI | Local | Production |
-|----|-------|------------|
-| **Scalar** (preferred) | http://localhost:8000/scalar | https://route53-f23x.onrender.com/scalar |
-| Swagger UI | http://localhost:8000/docs | https://route53-f23x.onrender.com/docs |
-| ReDoc | http://localhost:8000/redoc | https://route53-f23x.onrender.com/redoc |
-| OpenAPI JSON | http://localhost:8000/openapi.json | https://route53-f23x.onrender.com/openapi.json |
+| UI | App (Vercel / local FE) | API host (Render / local BE) |
+|----|-------------------------|------------------------------|
+| **Docs page** | [/docs](https://route53-ten.vercel.app/docs) | — |
+| **Scalar** (preferred) | `/scalar` | `/scalar` |
+| Swagger UI | `/swagger` | `/docs` |
+| ReDoc | `/redoc` | `/redoc` |
+| OpenAPI JSON | `/openapi.json` | `/openapi.json` |
+
+The frontend rewrites `/scalar`, `/swagger`, `/redoc`, and `/openapi.json` to the FastAPI backend (`NEXT_PUBLIC_API_URL`).
 
 Base path: **`/api/v1`**. Most routes require a valid session cookie.
 
