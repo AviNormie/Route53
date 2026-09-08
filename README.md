@@ -1,19 +1,35 @@
 # Route 53 Clone
 
-A full-stack DNS management platform inspired by **AWS Route 53**. Sign in to a console-style UI, create **hosted zones**, and manage **DNS records** (A, AAAA, CNAME, TXT, MX, NS, PTR, SRV, CAA) through a FastAPI backend.
+Full-stack DNS management console inspired by [Amazon Route 53](https://route53-ten.vercel.app/). Create hosted zones, manage DNS records, and import/export BIND zone files through a FastAPI backend.
+
+## Live demo
+
+| | URL |
+|--|-----|
+| **App (Vercel)** | [https://route53-ten.vercel.app/](https://route53-ten.vercel.app/) |
+| **API (Render)** | [https://route53-f23x.onrender.com](https://route53-f23x.onrender.com) |
+| **API docs (Scalar)** | [https://route53-f23x.onrender.com/scalar](https://route53-f23x.onrender.com/scalar) |
+| **Swagger UI** | [https://route53-f23x.onrender.com/docs](https://route53-f23x.onrender.com/docs) |
+| **ReDoc** | [https://route53-f23x.onrender.com/redoc](https://route53-f23x.onrender.com/redoc) |
+| **Health** | [https://route53-f23x.onrender.com/health](https://route53-f23x.onrender.com/health) |
+
+**Demo login:** `demo@example.com` / `DemoPass123!`
+
+> On Render free tier the API may cold-start (~30–60s). Wait for `/health` to return `{"status":"ok"}` before signing in.
 
 ---
 
 ## Table of contents
 
 - [Tech stack](#tech-stack)
-- [Setup instructions](#setup-instructions)
-- [Architecture overview](#architecture-overview)
+- [Setup](#setup)
+- [Architecture](#architecture)
+- [API documentation](#api-documentation)
 - [Database schema](#database-schema)
-- [API overview](#api-overview)
-- [Demo credentials](#demo-credentials)
 - [Docker](#docker)
 - [Tests](#tests)
+- [Assumptions / mocked data](#assumptions--mocked-data)
+- [Deploy](#deploy)
 
 ---
 
@@ -23,26 +39,26 @@ A full-stack DNS management platform inspired by **AWS Route 53**. Sign in to a 
 |-------|--------|
 | **Frontend** | Next.js 15 (App Router), React 19, TypeScript, Tailwind CSS, Yarn |
 | **Backend** | FastAPI, SQLAlchemy 2.x, Alembic, Poetry, Python 3.11+ |
-| **Database** | SQLite (local default) or MySQL (e.g. Aiven) |
-| **Auth** | Opaque session cookies (HttpOnly), not JWT |
+| **Database** | SQLite (local) or MySQL (e.g. Aiven in production) |
+| **Auth** | Opaque HttpOnly session cookies (not JWT) |
+| **API docs** | [Scalar](https://scalar.com/) (`/scalar`), plus Swagger (`/docs`) and ReDoc (`/redoc`) |
 
 ```text
 scaler-assignment/
-├── frontend/          # Next.js console + marketing UI
-├── backend/           # FastAPI API, models, migrations, seed
-├── docs/              # Extra documentation (optional)
+├── frontend/           # Next.js marketing site + console UI
+├── backend/            # FastAPI API, models, migrations, seed
 └── docker-compose.yml
 ```
 
 ---
 
-## Setup instructions
+## Setup
 
 ### Prerequisites
 
-- **Node.js** 20+ and **Yarn**
-- **Python** 3.11+ and **Poetry**
-- (Optional) Docker + Docker Compose
+- Node.js 20+ and Yarn
+- Python 3.11+ and Poetry
+- Optional: Docker Compose
 
 ### 1. Backend
 
@@ -50,45 +66,28 @@ scaler-assignment/
 cd backend
 poetry install
 cp .env.example .env
+poetry run alembic upgrade head
+poetry run python -m app.db.seed
+poetry run uvicorn app.main:app --reload --port 8000
 ```
 
-Edit `backend/.env` as needed:
+Local endpoints:
+
+- API: `http://localhost:8000`
+- **Scalar docs:** `http://localhost:8000/scalar`
+- Swagger: `http://localhost:8000/docs`
+- Health: `http://localhost:8000/health`
+
+Useful `.env` keys (see `backend/.env.example`):
 
 ```text
 DATABASE_URL=sqlite:///./data/route53.db
 SESSION_SECRET=change-me-in-production
-SESSION_EXPIRE_MINUTES=1440
-CORS_ORIGINS=http://localhost:3000,http://127.0.0.1:3000,http://localhost:3002
+CORS_ORIGINS=http://localhost:3000,http://127.0.0.1:3000
 ENVIRONMENT=dev
 DEMO_USER_EMAIL=demo@example.com
 DEMO_USER_PASSWORD=DemoPass123!
-LOGIN_RATE_LIMIT=5/minute
 ```
-
-**MySQL (optional):**
-
-```text
-DATABASE_URL=mysql://USER:PASSWORD@HOST:PORT/defaultdb?ssl-mode=REQUIRED
-# Optional CA path for verify-ca / verify-identity:
-# MYSQL_SSL_CA=/path/to/ca.pem
-```
-
-Run migrations and seed the demo user:
-
-```bash
-poetry run alembic upgrade head
-poetry run python -m app.db.seed
-```
-
-Start the API:
-
-```bash
-poetry run uvicorn app.main:app --reload --port 8000
-```
-
-- API: `http://localhost:8000`
-- OpenAPI docs: `http://localhost:8000/docs`
-- Health: `http://localhost:8000/health`
 
 ### 2. Frontend
 
@@ -98,167 +97,55 @@ yarn install
 cp .env.example .env.local
 ```
 
-`frontend/.env.local`:
-
 ```text
+# .env.local — upstream API for the Next.js /api/v1 proxy
 NEXT_PUBLIC_API_URL=http://localhost:8000
 ```
-
-Start the UI:
 
 ```bash
 yarn dev
 ```
 
-Open `http://localhost:3000` (or the next free port Yarn prints, e.g. `3002`).
+Open `http://localhost:3000`. Prefer the same host family (`localhost` vs `127.0.0.1`) for FE and API so cookies work.
 
-> Use the same host family for FE and API (`localhost` vs `127.0.0.1`) so the session cookie is sent correctly.
-
-### 3. Quick smoke check
+### 3. Smoke test
 
 1. Open the app → **Sign in to console**
-2. Log in with the [demo credentials](#demo-credentials)
-3. Create a hosted zone → open it → create DNS records
+2. Log in with the demo credentials
+3. Create a hosted zone → open it → create records (or import a BIND zone file)
 
 ---
 
-## Architecture overview
+## Architecture
 
 ```text
-┌─────────────────────┐        HTTPS + cookie        ┌─────────────────────┐
-│  Next.js frontend   │  ←──── credentials:include ──→ │  FastAPI backend    │
-│  (console UI)       │                               │  /api/v1/*          │
-└─────────────────────┘                               └──────────┬──────────┘
-                                                                 │
-                                                      SQLAlchemy │
-                                                                 ▼
-                                                      ┌─────────────────────┐
-                                                      │  SQLite / MySQL     │
-                                                      │  users, sessions,   │
-                                                      │  hosted_zones,      │
-                                                      │  dns_records        │
-                                                      └─────────────────────┘
+Browser ──► Next.js (Vercel) ── /api/v1/* proxy ──► FastAPI (Render)
+                                                         │
+                                                    SQLAlchemy
+                                                         ▼
+                                                   SQLite / MySQL
 ```
 
-### Request flow
+1. Login `POST /api/v1/auth/login` creates a `sessions` row and sets an HttpOnly `session_id` cookie.
+2. The frontend calls **same-origin** `/api/v1/*`; Next.js proxies to the backend so the cookie stays first-party on Vercel.
+3. Hosted zones and DNS records are scoped to the authenticated user (`created_by`).
 
-1. User signs in via `POST /api/v1/auth/login`
-2. Backend creates a row in `sessions` and sets an HttpOnly cookie (`session_id`)
-3. Subsequent console API calls include the cookie; `GET /api/v1/auth/me` resolves the user
-4. Hosted zones and DNS records are scoped to the authenticated user (`created_by`)
-
-### Backend layout
-
-| Package | Responsibility |
-|---------|----------------|
-| `app/api` | HTTP routers (`/auth`, `/hosted-zones`, records) |
-| `app/schemas` | Pydantic request/response models |
-| `app/services` | Business logic (validation, ownership, CRUD) |
-| `app/models` | SQLAlchemy ORM entities |
-| `app/db` | Engine, session factory, seed |
-| `app/core` | Settings, security, rate limits |
-
-### Frontend layout
-
-| Area | Responsibility |
-|------|----------------|
-| `src/app/(auth)/` | Login / sign-in |
-| `src/app/(console)/` | Dashboard, hosted zones, records |
-| `src/components/console/` | Shell: nav, sidebar, Amazon Q panel, shared UI |
-| `src/lib/api.ts` | Typed API client (`credentials: "include"`) |
-
-### Auth model
-
-- **Session cookie** auth (not JWT)
-- Cookie: HttpOnly; `SameSite=Lax` in dev; `Secure` + `SameSite=None` in production (required for Vercel ↔ Render)
-- Login rate-limited via `LOGIN_RATE_LIMIT`
-- Logout deletes the session row and clears the cookie
-
-### CORS
-
-`CORS_ORIGINS` must include the frontend origin(s) **without a trailing slash** (e.g. `https://your-app.vercel.app`). Credentials are enabled so browsers attach the session cookie on cross-origin API calls.
-
-### Deploy checklist (Vercel frontend + Render API)
-
-**Render (backend) env**
-
-- `ENVIRONMENT=prod`
-- `CORS_ORIGINS=https://your-frontend.vercel.app` (exact browser origin, no trailing `/`)
-- `SESSION_SECRET` set to a long random value
-- `DATABASE_URL` and demo user vars as needed
-
-**Vercel (frontend) env**
-
-- `NEXT_PUBLIC_API_URL=https://your-api.onrender.com` (no trailing `/`)
-
-Redeploy both after changing env vars.
+**Auth:** session cookie — `SameSite=Lax` in dev; `Secure` + `SameSite=None` when `ENVIRONMENT=prod`. Login is rate-limited (`LOGIN_RATE_LIMIT`).
 
 ---
 
-## Database schema
+## API documentation
 
-Four core tables (Alembic revision `922b54a6cc68` and ORM models).
+Interactive reference is generated from the OpenAPI schema:
 
-```text
-users 1───* sessions
-  │
-  └──1───* hosted_zones 1───* dns_records
-```
+| UI | Local | Production |
+|----|-------|------------|
+| **Scalar** (preferred) | http://localhost:8000/scalar | https://route53-f23x.onrender.com/scalar |
+| Swagger UI | http://localhost:8000/docs | https://route53-f23x.onrender.com/docs |
+| ReDoc | http://localhost:8000/redoc | https://route53-f23x.onrender.com/redoc |
+| OpenAPI JSON | http://localhost:8000/openapi.json | https://route53-f23x.onrender.com/openapi.json |
 
-### `users`
-
-| Column | Type | Notes |
-|--------|------|--------|
-| `id` | Integer PK | Autoincrement |
-| `email` | String | Unique, indexed |
-| `password_hash` | String | Bcrypt |
-| `created_at` | DateTime (tz) | |
-
-### `sessions`
-
-| Column | Type | Notes |
-|--------|------|--------|
-| `id` | String PK | Opaque session token (cookie value) |
-| `user_id` | FK → `users.id` | **ON DELETE CASCADE** |
-| `created_at` | DateTime (tz) | |
-| `expires_at` | DateTime (tz) | Driven by `SESSION_EXPIRE_MINUTES` |
-
-### `hosted_zones`
-
-| Column | Type | Notes |
-|--------|------|--------|
-| `id` | String(32) PK | Zone identifier |
-| `name` | String | Domain name (e.g. `example.com.`) |
-| `type` | Enum/String | `Public` \| `Private` |
-| `comment` | Text, nullable | Description |
-| `record_count` | Integer | Maintained when records change |
-| `created_by` | FK → `users.id` | Owner |
-| `created_at` / `updated_at` | DateTime (tz) | |
-
-### `dns_records`
-
-| Column | Type | Notes |
-|--------|------|--------|
-| `id` | String(36) PK | Record identifier |
-| `hosted_zone_id` | FK → `hosted_zones.id` | **ON DELETE CASCADE** |
-| `name` | String | Record name / FQDN |
-| `type` | String | `A`, `AAAA`, `CNAME`, `TXT`, `MX`, `NS`, `PTR`, `SRV`, `CAA` |
-| `ttl` | Integer | Default `300` |
-| `value` | Text | Target / RDATA |
-| `priority` | Integer, nullable | MX / SRV |
-| `weight` / `port` | Integer, nullable | SRV |
-| `caa_flag` / `caa_tag` | nullable | CAA (`issue`, `issuewild`, `iodef`) |
-| `created_at` / `updated_at` | DateTime (tz) | |
-
-SQLite enables `PRAGMA foreign_keys=ON` so cascades work locally.
-
----
-
-## API overview
-
-Base URL: `http://localhost:8000`  
-API prefix: **`/api/v1`**  
-Interactive docs: **`/docs`**
+Base path: **`/api/v1`**. Most routes require a valid session cookie.
 
 ### Health
 
@@ -266,56 +153,49 @@ Interactive docs: **`/docs`**
 |--------|------|------|-------------|
 | `GET` | `/health` | No | Liveness + DB connectivity |
 
-### Auth — `/api/v1/auth`
+### Auth
 
 | Method | Path | Auth | Description |
 |--------|------|------|-------------|
-| `POST` | `/api/v1/auth/login` | No | Authenticate; set session cookie; return user |
+| `POST` | `/api/v1/auth/signup` | No | Create account; set session cookie |
+| `POST` | `/api/v1/auth/login` | No | Authenticate; set session cookie |
 | `POST` | `/api/v1/auth/logout` | Session | Delete session; clear cookie |
-| `GET` | `/api/v1/auth/me` | Session | Current authenticated user |
-
-**Login body (example):**
+| `GET` | `/api/v1/auth/me` | Session | Current user |
 
 ```json
-{
-  "email": "demo@example.com",
-  "password": "DemoPass123!"
-}
+{ "email": "demo@example.com", "password": "DemoPass123!" }
 ```
 
-### Hosted zones — `/api/v1/hosted-zones`
-
-All routes require a valid session.
+### Hosted zones
 
 | Method | Path | Description |
 |--------|------|-------------|
-| `GET` | `/api/v1/hosted-zones` | List zones (`search`, `sort_by`, `sort_order`, `page`, `page_size`) |
+| `GET` | `/api/v1/hosted-zones` | List (`search`, `sort_by`, `sort_order`, `page`, `page_size`) |
 | `POST` | `/api/v1/hosted-zones` | Create zone (`201`) |
-| `GET` | `/api/v1/hosted-zones/{zone_id}` | Get one zone |
+| `GET` | `/api/v1/hosted-zones/{zone_id}` | Get zone |
 | `PUT` | `/api/v1/hosted-zones/{zone_id}` | Update zone |
 | `DELETE` | `/api/v1/hosted-zones/{zone_id}` | Delete zone (`204`) |
-
-**Create body (example):**
+| `GET` | `/api/v1/hosted-zones/{zone_id}/export` | Export zone (`format=json\|bind`) |
+| `POST` | `/api/v1/hosted-zones/export` | Bulk export (JSON array / BIND zip) |
 
 ```json
-{
-  "name": "example.com",
-  "type": "Public",
-  "comment": "Production DNS"
-}
+{ "name": "example.com", "type": "Public", "comment": "Production DNS" }
 ```
 
 ### DNS records
 
+Supported types: `A`, `AAAA`, `CNAME`, `TXT`, `MX`, `NS`, `PTR`, `SRV`, `CAA`, `SOA`.
+
 | Method | Path | Description |
 |--------|------|-------------|
-| `GET` | `/api/v1/hosted-zones/{zone_id}/records` | List records (`search`, `type`, pagination) |
+| `GET` | `/api/v1/hosted-zones/{zone_id}/records` | List (`search`, `type`, pagination) |
 | `POST` | `/api/v1/hosted-zones/{zone_id}/records` | Create record (`201`) |
-| `GET` | `/api/v1/records/{record_id}` | Get one record |
+| `GET` | `/api/v1/records/{record_id}` | Get record |
 | `PUT` | `/api/v1/records/{record_id}` | Update record |
 | `DELETE` | `/api/v1/records/{record_id}` | Delete record (`204`) |
-
-**Create A record (example):**
+| `POST` | `/api/v1/hosted-zones/{zone_id}/records/import/preview` | BIND preview (multipart) |
+| `POST` | `/api/v1/hosted-zones/{zone_id}/records/import/preview-json` | BIND preview (JSON body) |
+| `POST` | `/api/v1/hosted-zones/{zone_id}/records/import` | Commit BIND import |
 
 ```json
 {
@@ -326,31 +206,37 @@ All routes require a valid session.
 }
 ```
 
+Try requests interactively in **Scalar** (cookie auth after calling login from the same docs origin, or use the console UI).
+
 ---
 
-## Demo credentials
+## Database schema
 
-Seeded by `poetry run python -m app.db.seed` (override via `DEMO_USER_*` in `.env`):
+```text
+users 1───* sessions
+  │
+  └──1───* hosted_zones 1───* dns_records
+```
 
-| Field | Default |
-|-------|---------|
-| Email | `demo@example.com` |
-| Password | `DemoPass123!` |
+| Table | Role |
+|-------|------|
+| `users` | Email + bcrypt password hash |
+| `sessions` | Opaque session token (cookie value), expiry |
+| `hosted_zones` | Domain name, Public/Private, comment, `record_count`, owner |
+| `dns_records` | Name, type, TTL, RDATA (+ MX/SRV/CAA fields) |
+
+Cascades: deleting a user removes sessions; deleting a zone removes its records.
 
 ---
 
 ## Docker
 
-From the repo root:
-
 ```bash
 docker compose up --build
 ```
 
-- Frontend: `http://localhost:3000`
-- Backend: `http://localhost:8000`
-
-Compose uses SQLite in a mounted `backend/data` volume by default. Point `DATABASE_URL` at MySQL in `backend/.env` if you prefer a remote database.
+- Frontend: http://localhost:3000  
+- Backend: http://localhost:8000 (Scalar at `/scalar`)
 
 ---
 
@@ -363,13 +249,40 @@ poetry run pytest
 
 ---
 
-## Migrations
+## Assumptions / mocked data
 
-```bash
-cd backend
-poetry run alembic revision --autogenerate -m "describe change"
-poetry run alembic upgrade head
+- **Real:** auth, hosted zones, DNS record CRUD, BIND import/export — persisted in the database.
+- **Mocked / UI-only:** console account label/workgroup, dashboard notifications, domain-availability check (no real WHOIS/registration).
+- **Placeholders:** secondary Route 53 pages (health checks, resolver, traffic policies, domains, etc.) are visual shells only.
+- **Not AWS Route 53:** no real public DNS delegation or propagation; this is an assignment clone.
+
+---
+
+## Deploy
+
+| Service | Host | Notes |
+|---------|------|--------|
+| Frontend | [Vercel](https://route53-ten.vercel.app/) | Proxy `/api/v1/*` → Render via `NEXT_PUBLIC_API_URL` / `API_URL` |
+| Backend | [Render](https://route53-f23x.onrender.com) | Set `ENVIRONMENT=prod`, `CORS_ORIGINS=https://route53-ten.vercel.app` |
+
+**Render env (required for prod cookies + CORS):**
+
+```text
+ENVIRONMENT=prod
+CORS_ORIGINS=https://route53-ten.vercel.app
+SESSION_SECRET=<long-random-value>
+DATABASE_URL=<mysql-or-sqlite>
 ```
+
+**Vercel env:**
+
+```text
+NEXT_PUBLIC_API_URL=https://route53-f23x.onrender.com
+# optional server-only override:
+# API_URL=https://route53-f23x.onrender.com
+```
+
+Redeploy both after changing env vars. Origins must have **no trailing slash**.
 
 ---
 

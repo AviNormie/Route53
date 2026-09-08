@@ -1235,6 +1235,23 @@ files = [
 ]
 
 [[package]]
+name = "scalar-fastapi"
+version = "1.9.0"
+description = "FastAPI plugin to serve beautiful, interactive API documentation from OpenAPI/Swagger documents."
+optional = false
+python-versions = ">=3.9"
+groups = ["main"]
+files = [
+    {file = "scalar_fastapi-1.9.0-py3-none-any.whl", hash = "sha256:7aa67d9d4b3bde7e5eab86a8d16637ab743f3259090bb6bee6a33cf4293f1293"},
+    {file = "scalar_fastapi-1.9.0.tar.gz", hash = "sha256:f9d01cd97a3e01188df61cc41c4525cf733ee67feb6e5bc0a65cd197e5062633"},
+]
+
+[package.dependencies]
+fastapi = "*"
+pydantic = ">=2"
+typing-extensions = ">=4.8"
+
+[[package]]
 name = "sqlalchemy"
 version = "2.0.52"
 description = "Database Abstraction Library"
@@ -1743,4 +1760,4 @@ files = [
 [metadata]
 lock-version = "2.1"
 python-versions = "^3.11"
-content-hash = "f8e59aed342c268a7906b3fc4aec2fa867a150de78e057422ad531a6245ca8f2"
+content-hash = "a2bf39673ae40313ef7a66ce3f6cbdd929867faeae2695a8a5af4a53587d9a42"

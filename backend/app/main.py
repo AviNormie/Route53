@@ -5,6 +5,7 @@ from pathlib import Path
 from fastapi import Depends, FastAPI, Response, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from scalar_fastapi import Theme, add_scalar_reference
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
@@ -33,8 +34,26 @@ async def lifespan(_app: FastAPI) -> AsyncIterator[None]:
 
 app = FastAPI(
     title="Route 53 Clone API",
+    description=(
+        "DNS management API for the Route 53 clone: session auth, hosted zones, "
+        "and DNS records (including BIND import/export)."
+    ),
     version="0.1.0",
     lifespan=lifespan,
+)
+
+# Interactive API reference (Scalar). Also available: /docs (Swagger), /redoc.
+add_scalar_reference(
+    app,
+    route="/scalar",
+    theme=Theme.DEFAULT,
+    servers=[
+        {"url": "http://localhost:8000", "description": "Local"},
+        {
+            "url": "https://route53-f23x.onrender.com",
+            "description": "Production (Render)",
+        },
+    ],
 )
 
 register_exception_handlers(app)

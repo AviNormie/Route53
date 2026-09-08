@@ -20,6 +20,7 @@ bcrypt = ">=4.0.1,<4.1"
 email-validator = "^2.3.0"
 pymysql = "^1.2.0"
 cryptography = "^50.0.1"
+scalar-fastapi = "^1.9.0"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.3.0"
