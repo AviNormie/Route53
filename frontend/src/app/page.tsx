@@ -12,9 +12,17 @@ import { ResourceCards } from "@/components/route53/resource-cards";
 import { UseCases } from "@/components/route53/use-cases";
 
 export const metadata: Metadata = {
-  title: "Amazon Route 53 - DNS service",
+  title: {
+    absolute: "Amazon Route 53 - DNS service",
+  },
   description:
     "A reliable and cost-effective way to route end users to Internet applications",
+  openGraph: {
+    title: "Amazon Route 53 - DNS service",
+    description:
+      "A reliable and cost-effective way to route end users to Internet applications",
+    url: "https://route53-ten.vercel.app",
+  },
 };
 
 export default function HomePage() {

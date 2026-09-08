@@ -1,16 +1,15 @@
-"use client";
-
+import type { Metadata } from "next";
 import type { ReactNode } from "react";
-import { ConsoleAuthProvider } from "@/components/console/ConsoleAuthProvider";
-import { ConsoleThemeProvider } from "@/components/console/ConsoleThemeProvider";
-import { NotificationsProvider } from "@/components/console/NotificationsProvider";
+import { ConsoleProviders } from "@/components/console/ConsoleProviders";
+
+export const metadata: Metadata = {
+  title: {
+    default: "Console",
+    template: "%s | Route 53",
+  },
+  description: "Amazon Route 53 Clone management console",
+};
 
 export default function ConsoleRouteLayout({ children }: { children: ReactNode }) {
-  return (
-    <ConsoleThemeProvider>
-      <NotificationsProvider>
-        <ConsoleAuthProvider>{children}</ConsoleAuthProvider>
-      </NotificationsProvider>
-    </ConsoleThemeProvider>
-  );
+  return <ConsoleProviders>{children}</ConsoleProviders>;
 }
