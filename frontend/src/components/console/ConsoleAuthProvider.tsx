@@ -8,7 +8,7 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import { usePathname, useRouter } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { ApiError, getCurrentUser, type AuthUser } from "@/lib/api";
 import { ensureMockSession, getMockSession, type MockSession } from "@/lib/mock/session";
 
@@ -37,7 +37,6 @@ const ConsoleAuthContext = createContext<ConsoleAuthState>({
 
 export function ConsoleAuthProvider({ children }: { children: ReactNode }) {
   const router = useRouter();
-  const pathname = usePathname();
   const [user, setUser] = useState<AuthUser | null>(null);
   const [session, setSession] = useState<MockSession>(defaultSession);
   const [ready, setReady] = useState(false);
@@ -52,7 +51,11 @@ export function ConsoleAuthProvider({ children }: { children: ReactNode }) {
         if (cancelled) return;
 
         if (!current) {
-          const next = pathname ? `?next=${encodeURIComponent(pathname)}` : "";
+          const nextPath = `${window.location.pathname}${window.location.search}`;
+          const next =
+            nextPath && nextPath !== "/login"
+              ? `?next=${encodeURIComponent(nextPath)}`
+              : "";
           router.replace(`/login${next}`);
           setUser(null);
           setError("");
@@ -83,7 +86,7 @@ export function ConsoleAuthProvider({ children }: { children: ReactNode }) {
     return () => {
       cancelled = true;
     };
-  }, [pathname, router]);
+  }, [router]);
 
   const value = useMemo(
     () => ({ user, session, ready, error }),

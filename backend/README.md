@@ -73,6 +73,10 @@ For a Vercel frontend talking to this API on another host (e.g. Render), set:
 - `ENVIRONMENT=prod` → session cookie is `Secure` + `SameSite=None`
 - `CORS_ORIGINS=https://your-app.vercel.app` (no trailing slash)
 
+The frontend proxies `/api/v1/*` to this API (`frontend/next.config.ts`) so the
+session cookie is first-party on the Vercel domain. Still set `ENVIRONMENT=prod`
+on Render so any direct cross-origin calls also get a valid cookie.
+
 Seed the demo user:
 
 ```bash

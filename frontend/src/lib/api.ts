@@ -1,4 +1,9 @@
 export function getApiUrl(): string {
+  // Same-origin relative URLs so the session cookie is first-party.
+  // next.config.ts rewrites /api/v1/* to the backend (local or Render).
+  if (typeof window !== "undefined") {
+    return "";
+  }
   return process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, "") || "http://localhost:8000";
 }
 
