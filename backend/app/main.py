@@ -1,12 +1,11 @@
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 
-from fastapi import Depends, FastAPI, Response, status
+from fastapi import FastAPI, Response, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from scalar_fastapi import Theme, add_scalar_reference
 from sqlalchemy import text
-from sqlalchemy.orm import Session
 
 from app.api.v1.router import api_router
 from app.core.config import settings
@@ -14,7 +13,7 @@ from app.core.exceptions import register_exception_handlers
 from app.core.logging import configure_logging
 from app.core.middleware import RequestIdMiddleware
 from app.db.paths import ensure_sqlite_parent_dir
-from app.db.session import get_db
+from app.db.session import SessionLocal
 
 
 @asynccontextmanager
@@ -73,25 +72,15 @@ app.include_router(api_router, prefix="/api/v1")
 
 
 @app.get("/health", tags=["health"])
-def health(db: Session = Depends(get_db)) -> Response:
-    """Liveness probe for Render — always 200 so deploys are not blocked by DB blips.
-
-    Includes a soft ``database`` field. Use ``/ready`` when you need a hard DB check.
-    """
-    database = "up"
-    try:
-        db.execute(text("SELECT 1"))
-    except Exception:
-        database = "down"
-    return JSONResponse(
-        status_code=status.HTTP_200_OK,
-        content={"status": "ok", "database": database},
-    )
+def health() -> dict[str, str]:
+    """Liveness only — no DB. Render health checks must always get 200."""
+    return {"status": "ok"}
 
 
 @app.get("/ready", tags=["health"])
-def ready(db: Session = Depends(get_db)) -> Response:
-    """Readiness probe — 503 when the database is unreachable."""
+def ready() -> Response:
+    """Readiness — checks DB without failing process liveness."""
+    db = SessionLocal()
     try:
         db.execute(text("SELECT 1"))
     except Exception:
@@ -99,4 +88,6 @@ def ready(db: Session = Depends(get_db)) -> Response:
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
             content={"detail": "Database unavailable", "status": "error"},
         )
+    finally:
+        db.close()
     return JSONResponse(status_code=status.HTTP_200_OK, content={"status": "ok"})

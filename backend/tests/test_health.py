@@ -8,9 +8,7 @@ from app.models.user import User
 def test_health(client: TestClient) -> None:
     response = client.get("/health")
     assert response.status_code == 200
-    body = response.json()
-    assert body["status"] == "ok"
-    assert body["database"] in {"up", "down"}
+    assert response.json() == {"status": "ok"}
     assert "x-request-id" in response.headers
 
 
