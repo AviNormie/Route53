@@ -9,7 +9,9 @@ def test_health(client: TestClient) -> None:
     for path in ("/", "/health", "/healthz"):
         response = client.get(path)
         assert response.status_code == 200
-        assert response.json() == {"status": "ok"}
+        body = response.json()
+        assert body["status"] == "ok"
+        assert body.get("build") == "20260916a"
     assert "x-request-id" in client.get("/health").headers
 
 
