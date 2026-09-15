@@ -71,17 +71,20 @@ app.add_middleware(RequestIdMiddleware)
 app.include_router(api_router, prefix="/api/v1")
 
 
+@app.get("/", tags=["health"], include_in_schema=False)
 @app.get("/health", tags=["health"])
+@app.get("/healthz", tags=["health"], include_in_schema=False)
 def health() -> dict[str, str]:
-    """Liveness only — no DB. Render health checks must always get 200."""
+    """Instant liveness for Render — never touches the database."""
     return {"status": "ok"}
 
 
 @app.get("/ready", tags=["health"])
 def ready() -> Response:
-    """Readiness — checks DB without failing process liveness."""
+    """Optional DB readiness. Do NOT set this as Render's Health Check Path."""
     db = SessionLocal()
     try:
+        # Fail fast — do not hang Render health checks if someone points them here.
         db.execute(text("SELECT 1"))
     except Exception:
         return JSONResponse(

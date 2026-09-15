@@ -4,7 +4,8 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     POETRY_VERSION=1.8.5 \
     POETRY_VIRTUALENVS_CREATE=false \
-    POETRY_NO_INTERACTION=1
+    POETRY_NO_INTERACTION=1 \
+    PORT=10000
 
 WORKDIR /app
 
@@ -20,10 +21,8 @@ COPY . .
 RUN poetry install --only main \
     && mkdir -p /app/data
 
-EXPOSE 8000
+# Render routes to $PORT (default 10000). EXPOSE must not disagree.
+EXPOSE 10000
 
-RUN chmod +x /app/scripts/start.sh
-
-# Fast boot: no migrate/seed here (those blocked Render health checks).
-# Run once after DB is up: alembic upgrade head && python -m app.db.seed
-CMD ["/app/scripts/start.sh"]
+# Shell form so $PORT expands. No migrate/seed on boot.
+CMD uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-10000}
