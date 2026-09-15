@@ -97,23 +97,24 @@ poetry run alembic upgrade head
 
 ## Deploy notes (Render)
 
-Login returns **500** if migrations were never applied (health still passes — it only runs `SELECT 1`).
+### Required env vars
 
-On first deploy / after schema changes, the container runs:
+| Key | Example |
+|-----|---------|
+| `DATABASE_URL` | `mysql://USER:PASS@HOST:PORT/defaultdb?ssl-mode=REQUIRED` (Aiven) |
+| `ENVIRONMENT` | `prod` |
+| `CORS_ORIGINS` | `https://route53-ten.vercel.app` |
+| `SESSION_SECRET` | long random string |
+| `DEMO_USER_EMAIL` | `demo@example.com` |
+| `DEMO_USER_PASSWORD` | `DemoPass123!` |
 
-```bash
-alembic upgrade head
-python -m app.db.seed
-uvicorn ...
-```
+If `DATABASE_URL` is **missing**, the app falls back to SQLite and you may see
+`unable to open database file` until `/app/data` exists. Prefer MySQL on Render.
 
-via `scripts/start.sh`.
+Startup (`scripts/start.sh`) now:
+1. Creates the SQLite data dir if needed
+2. Runs `alembic upgrade head`
+3. Seeds the demo user
+4. Starts uvicorn
 
-**One-time fix without waiting for a new image** (Render Shell):
-
-```bash
-alembic upgrade head
-python -m app.db.seed
-```
-
-Then retry login with `demo@example.com` / `DemoPass123!`.
+**After pushing:** Manual Deploy the backend on Render, then login with the demo user.

@@ -8,6 +8,7 @@ from sqlalchemy.engine import Engine
 from sqlalchemy.orm import Session, sessionmaker
 
 from app.core.config import settings
+from app.db.paths import ensure_sqlite_parent_dir
 
 _SSL_QUERY_KEYS = {"ssl-mode", "sslmode"}
 
@@ -77,6 +78,7 @@ def _normalize_database_url(url: str) -> tuple[str, dict]:
 
 
 db_url, connect_args = _normalize_database_url(settings.database_url)
+ensure_sqlite_parent_dir(settings.database_url)
 
 engine = create_engine(
     db_url,

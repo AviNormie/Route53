@@ -10,12 +10,14 @@ import app.models  # noqa: F401
 from alembic import context
 from app.core.config import settings
 from app.db.base import Base
+from app.db.paths import ensure_sqlite_parent_dir
 from app.db.session import engine
 
 config = context.config
 # Keep alembic.ini in sync for offline tooling, but online uses the app engine
 # (MySQL SSL / mysql+pymysql normalization).
 config.set_main_option("sqlalchemy.url", settings.database_url)
+ensure_sqlite_parent_dir(settings.database_url)
 
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)

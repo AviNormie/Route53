@@ -36,12 +36,9 @@ def seed_demo_user() -> User:
 
 
 def main() -> int:
-    # Ensure SQLite parent directory exists when using the default URL.
-    if settings.database_url.startswith("sqlite:///./"):
-        from pathlib import Path
+    from app.db.paths import ensure_sqlite_parent_dir
 
-        relative = settings.database_url.removeprefix("sqlite:///./")
-        Path(relative).parent.mkdir(parents=True, exist_ok=True)
+    ensure_sqlite_parent_dir(settings.database_url)
 
     # Touch the engine so connection errors surface early.
     with engine.connect() as connection:

@@ -1,6 +1,5 @@
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
-from pathlib import Path
 
 from fastapi import Depends, FastAPI, Response, status
 from fastapi.middleware.cors import CORSMiddleware
@@ -14,21 +13,14 @@ from app.core.config import settings
 from app.core.exceptions import register_exception_handlers
 from app.core.logging import configure_logging
 from app.core.middleware import RequestIdMiddleware
+from app.db.paths import ensure_sqlite_parent_dir
 from app.db.session import get_db
-
-
-def _ensure_sqlite_data_dir() -> None:
-    if settings.database_url.startswith("sqlite:///./"):
-        relative = settings.database_url.removeprefix("sqlite:///./")
-        db_path = Path(relative)
-        if db_path.parent != Path("."):
-            db_path.parent.mkdir(parents=True, exist_ok=True)
 
 
 @asynccontextmanager
 async def lifespan(_app: FastAPI) -> AsyncIterator[None]:
     configure_logging()
-    _ensure_sqlite_data_dir()
+    ensure_sqlite_parent_dir(settings.database_url)
     yield
 
 
