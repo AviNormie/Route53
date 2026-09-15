@@ -1,0 +1,28 @@
+# Render Blueprint — keep Root Directory = backend (or set dockerfilePath below from repo root).
+# https://render.com/docs/blueprint-spec
+
+services:
+  - type: web
+    name: route53-f23x
+    runtime: docker
+    plan: free
+    region: oregon
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    # MUST match uvicorn bind / $PORT (Render default is 10000)
+    healthCheckPath: /health
+    envVars:
+      - key: PORT
+        value: "10000"
+      - key: ENVIRONMENT
+        value: prod
+      - key: DATABASE_URL
+        sync: false
+      - key: CORS_ORIGINS
+        sync: false
+      - key: SESSION_SECRET
+        generateValue: true
+      - key: DEMO_USER_EMAIL
+        value: demo@example.com
+      - key: DEMO_USER_PASSWORD
+        sync: false

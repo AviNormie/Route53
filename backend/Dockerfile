@@ -17,12 +17,15 @@ RUN apt-get update \
 COPY pyproject.toml poetry.lock* ./
 RUN poetry install --only main --no-root
 
+# Bump CACHEBUST on Render ("Clear build cache") or when deploys stick on stale layers.
+ARG CACHEBUST=20260916a
+RUN echo "cachebust=${CACHEBUST}"
+
 COPY . .
 RUN poetry install --only main \
     && mkdir -p /app/data
 
-# Render routes to $PORT (default 10000). EXPOSE must not disagree.
 EXPOSE 10000
 
-# Shell form so $PORT expands. No migrate/seed on boot.
-CMD uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-10000}
+# Bind explicitly to Render's port. Verify with GET /health → {"status":"ok","build":"..."}
+CMD ["sh", "-c", "exec uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-10000}"]
