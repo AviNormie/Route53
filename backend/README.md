@@ -111,10 +111,13 @@ poetry run alembic upgrade head
 If `DATABASE_URL` is **missing**, the app falls back to SQLite and you may see
 `unable to open database file` until `/app/data` exists. Prefer MySQL on Render.
 
-Startup (`scripts/start.sh`) now:
-1. Creates the SQLite data dir if needed
-2. Runs `alembic upgrade head`
-3. Seeds the demo user
-4. Starts uvicorn
+Startup (`scripts/start.sh`) only starts uvicorn (fast boot for Render health checks).
 
-**After pushing:** Manual Deploy the backend on Render, then login with the demo user.
+After the DB is reachable, run **once** in Render Shell:
+
+```bash
+alembic upgrade head
+python -m app.db.seed
+```
+
+Set Render **Health Check Path** to `/health` (always returns 200). Use `/ready` if you want a DB-gated check.

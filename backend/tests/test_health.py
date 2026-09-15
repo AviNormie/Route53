@@ -8,8 +8,16 @@ from app.models.user import User
 def test_health(client: TestClient) -> None:
     response = client.get("/health")
     assert response.status_code == 200
-    assert response.json() == {"status": "ok"}
+    body = response.json()
+    assert body["status"] == "ok"
+    assert body["database"] in {"up", "down"}
     assert "x-request-id" in response.headers
+
+
+def test_ready(client: TestClient) -> None:
+    response = client.get("/ready")
+    assert response.status_code == 200
+    assert response.json() == {"status": "ok"}
 
 
 def test_request_id_echo(client: TestClient) -> None:

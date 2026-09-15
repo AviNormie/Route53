@@ -24,5 +24,6 @@ EXPOSE 8000
 
 RUN chmod +x /app/scripts/start.sh
 
-# Migrate + seed on boot so Render/MySQL always has schema + demo user.
+# Fast boot: no migrate/seed here (those blocked Render health checks).
+# Run once after DB is up: alembic upgrade head && python -m app.db.seed
 CMD ["/app/scripts/start.sh"]

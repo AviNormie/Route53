@@ -74,7 +74,24 @@ app.include_router(api_router, prefix="/api/v1")
 
 @app.get("/health", tags=["health"])
 def health(db: Session = Depends(get_db)) -> Response:
-    """Liveness/readiness probe — verifies DB connectivity."""
+    """Liveness probe for Render — always 200 so deploys are not blocked by DB blips.
+
+    Includes a soft ``database`` field. Use ``/ready`` when you need a hard DB check.
+    """
+    database = "up"
+    try:
+        db.execute(text("SELECT 1"))
+    except Exception:
+        database = "down"
+    return JSONResponse(
+        status_code=status.HTTP_200_OK,
+        content={"status": "ok", "database": database},
+    )
+
+
+@app.get("/ready", tags=["health"])
+def ready(db: Session = Depends(get_db)) -> Response:
+    """Readiness probe — 503 when the database is unreachable."""
     try:
         db.execute(text("SELECT 1"))
     except Exception:
