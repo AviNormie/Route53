@@ -22,4 +22,7 @@ RUN poetry install --only main \
 
 EXPOSE 8000
 
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+RUN chmod +x /app/scripts/start.sh
+
+# Migrate + seed on boot so Render/MySQL always has schema + demo user.
+CMD ["/app/scripts/start.sh"]

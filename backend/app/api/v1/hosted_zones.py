@@ -129,3 +129,8 @@ def delete_hosted_zone(
 ) -> Response:
     hosted_zone_service.delete(db, current_user, zone_id)
     return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+
+
+
+

@@ -95,10 +95,25 @@ poetry run alembic revision --autogenerate -m "message"
 poetry run alembic upgrade head
 ```
 
-## Docker
+## Deploy notes (Render)
 
-From the repo root:
+Login returns **500** if migrations were never applied (health still passes — it only runs `SELECT 1`).
+
+On first deploy / after schema changes, the container runs:
 
 ```bash
-docker compose up --build
+alembic upgrade head
+python -m app.db.seed
+uvicorn ...
 ```
+
+via `scripts/start.sh`.
+
+**One-time fix without waiting for a new image** (Render Shell):
+
+```bash
+alembic upgrade head
+python -m app.db.seed
+```
+
+Then retry login with `demo@example.com` / `DemoPass123!`.
