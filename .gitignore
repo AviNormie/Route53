@@ -1,6 +1,5 @@
 # OS / editor
 .DS_Store
-.vscode/
 .idea/
 *.swp
 *.swo
@@ -37,8 +36,8 @@ __pycache__/
 venv/
 
 # Env
-.env
-.env.local
 
 # Logs
 *.log
+config.bat
+node_modules

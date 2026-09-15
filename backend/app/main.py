@@ -76,7 +76,8 @@ app.include_router(api_router, prefix="/api/v1")
 @app.get("/healthz", tags=["health"], include_in_schema=False)
 def health() -> dict[str, str]:
     """Instant liveness for Render — never touches the database."""
-    return {"status": "ok"}
+    # `build` proves which image is live (old image returns Database unavailable 503).
+    return {"status": "ok", "build": "20260916a"}
 
 
 @app.get("/ready", tags=["health"])
